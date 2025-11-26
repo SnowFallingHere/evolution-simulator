@@ -42,13 +42,14 @@
     box-sizing: border-box;
 }
 
-body {
+html, body {
     font-family: Arial, sans-serif;
-    height: 100vh;
-    overflow: hidden;
+    height: 100%;
+    overflow: auto;
     background-color: var(--bg-color);
     color: var(--text-color);
     transition: background-color 0.3s, color 0.3s;
+    -webkit-overflow-scrolling: touch; /* 启用iOS弹性滚动 */
 }
 
 /* 主题切换按钮 */
@@ -82,8 +83,9 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    min-height: 100%;
     display: none;
+    overflow: auto;
 }
 
 /* 死亡页面 */
@@ -93,6 +95,8 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 100;
+    position: fixed;
+    height: 100%;
 }
 
 .death-message {
@@ -107,6 +111,7 @@ body {
     z-index: 10;
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
 }
 
 /* 终点页面 */
@@ -116,6 +121,8 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 90;
+    position: fixed;
+    height: 100%;
 }
 
 .end-message {
@@ -128,7 +135,7 @@ body {
 .container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    min-height: 100vh;
 }
 
 /* 顶部标题区域 */
@@ -139,6 +146,7 @@ body {
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0; /* 防止标题区域被压缩 */
 }
 
 .header h1 {
@@ -150,7 +158,8 @@ body {
 .main-content {
     display: flex;
     flex: 1;
-    height: calc(100% - 35px);
+    overflow: hidden; /* 防止外部滚动 */
+    min-height: 0; /* 允许flex子项缩小 */
 }
 
 /* 左侧状态栏 */
@@ -159,8 +168,9 @@ body {
     border-right: 1px solid var(--border-color);
     padding: 10px;
     position: relative;
-    overflow: auto;
+    overflow-y: auto;
     background-color: var(--panel-bg);
+    min-height: 0; /* 允许flex子项缩小 */
 }
 
 /* 状态栏标题 */
@@ -229,8 +239,9 @@ body {
     border-right: 1px solid var(--border-color);
     padding: 10px;
     position: relative;
-    overflow: auto;
+    overflow-y: auto;
     background-color: var(--panel-bg);
+    min-height: 0; /* 允许flex子项缩小 */
 }
 
 /* 中部标题 */
@@ -245,6 +256,7 @@ body {
     display: flex;
     justify-content: space-between;
     margin-bottom: 15px;
+    flex-wrap: wrap; /* 允许按钮换行 */
 }
 
 /* 动作按钮 */
@@ -261,6 +273,8 @@ body {
     color: var(--text-color);
     position: relative;
     overflow: hidden;
+    min-width: 120px; /* 设置按钮最小宽度 */
+    margin-bottom: 5px; /* 为移动设备添加底部边距 */
 }
 
 .action-btn:hover:not(:disabled) {
@@ -307,10 +321,11 @@ body {
     flex: 2.5;
     padding: 10px;
     position: relative;
-    overflow: auto;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     background-color: var(--panel-bg);
+    min-height: 0; /* 允许flex子项缩小 */
 }
 
 /* 右侧标题 */
@@ -325,6 +340,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-height: 0; /* 允许flex子项缩小 */
 }
 
 .timeline-section h3 {
@@ -338,18 +354,19 @@ body {
     flex: 1;
     border: 1px solid var(--border-color);
     padding: 5px;
-    overflow: hidden;
+    overflow-y: auto;
     font-size: 12px;
     display: flex;
     flex-direction: column;
     background-color: var(--bg-color);
+    min-height: 0; /* 允许flex子项缩小 */
 }
 
 /* 关键事件列表 */
 .key-events-list {
     flex: 1;
     overflow-y: auto;
-    max-height: calc(100% - 50px);
+    min-height: 0; /* 允许flex子项缩小 */
 }
 
 /* 分隔线 */
@@ -371,7 +388,7 @@ body {
     background-color: var(--border-color);
 }
 
-/* 响应式调整 */
+/* 响应式调整 - 针对移动设备优化 */
 @media (max-width: 768px) {
     .header h1 {
         font-size: 16px;
@@ -379,6 +396,8 @@ body {
     
     .main-content {
         flex-direction: column;
+        height: auto;
+        overflow: visible;
     }
     
     .left-panel,
@@ -388,6 +407,8 @@ body {
         width: 100%;
         border-right: none;
         border-bottom: 1px solid var(--border-color);
+        overflow: visible;
+        min-height: auto;
     }
     
     .left-panel::after,
@@ -397,14 +418,17 @@ body {
     
     .button-row {
         flex-direction: column;
+        align-items: center;
     }
     
     .action-btn {
+        width: 100%;
         margin: 5px 0;
+        min-width: auto;
     }
     
     .timeline-section {
-        min-height: 150px;
+        min-height: 200px;
     }
     
     .progress-container {
@@ -420,6 +444,70 @@ body {
     .death-message,
     .end-message {
         font-size: 40px;
+        padding: 0 20px;
+        text-align: center;
+    }
+    
+    /* 移动设备上的滚动优化 */
+    .left-panel,
+    .center-panel,
+    .right-panel,
+    .timeline-content {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* 确保内容区域可以滚动 */
+    .ongoing-page {
+        overflow: auto;
+    }
+    
+    /* 调整移动设备上的字体大小 */
+    .status-label,
+    .sub-label {
+        font-size: 14px;
+    }
+    
+    .action-btn {
+        font-size: 14px;
+        padding: 12px 8px;
+    }
+}
+
+/* 针对小屏幕手机的额外优化 */
+@media (max-width: 480px) {
+    .header {
+        height: 45px;
+    }
+    
+    .header h1 {
+        font-size: 14px;
+    }
+    
+    .left-panel,
+    .center-panel,
+    .right-panel {
+        padding: 8px;
+    }
+    
+    .status-label,
+    .sub-label {
+        font-size: 13px;
+    }
+    
+    .action-btn {
+        font-size: 13px;
+        padding: 10px 6px;
+    }
+    
+    .death-message,
+    .end-message {
+        font-size: 32px;
+    }
+    
+    .theme-toggle {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
     }
 }
 
@@ -547,4 +635,15 @@ body {
 .requirements-table tr.current-level {
     background-color: #d4edda;
     font-weight: bold;
+}
+
+/* 移动设备上的控制台优化 */
+@media (max-width: 768px) {
+    .console {
+        width: 90%;
+        height: 70%;
+        left: 5%;
+        top: 15%;
+        resize: none;
+    }
 }
