@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>进化模拟器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="light-theme">
+    <!-- 主题切换按钮 -->
+    <button id="theme-toggle" class="theme-toggle">🌙</button>
+    
+    <!-- 死亡页面 - 初始隐藏 -->
+    <div id="death" class="page death-page">
+        <div class="death-message">你失败了</div>
+    </div>
+
+    <!-- 进行中页面 - 初始显示 -->
+    <div id="ongoing" class="page ongoing-page">
+        <div class="container">
+            <!-- 顶部标题区域 -->
+            <header class="header">
+                <h1>进化模拟器</h1>
+            </header>
+            
+            <!-- 主要内容区域 -->
+            <main class="main-content">
+                <!-- 左侧状态栏 -->
+                <section class="left-panel">
+                    <h2>状态栏</h2>
+                    <div class="status-item">
+                        <div class="status-label">进化等级 <span id="evolution-level">0</span>/100</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">进化点数 <span id="current-points">0</span></div>
+                        <div class="progress-container">
+                            <div id="evolution-points-progress" class="progress-bar">
+                                <div id="evolution-points-filled" class="progress-filled" style="width: 0%;"></div>
+                            </div>
+                            <div class="remaining-text">剩余：<span id="remaining-points">--</span></div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">属性状态</div>
+                        <div class="sub-item">
+                            <div class="sub-label">力量值 <span id="strength-value">1.0</span></div>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-filled" style="width: 0.6%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <div class="sub-label">速度值 <span id="speed-value">1.0</span></div>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-filled" style="width: 0.6%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <div class="sub-label">智慧值 <span id="intelligence-value">1.0</span></div>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-filled" style="width: 0.6%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">健康状态</div>
+                        <div class="sub-item">
+                            <div class="sub-label">饥饿值 <span id="hunger-value">0</span></div>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-filled" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <div class="sub-label">心理健康值 <span id="mental-health-value">100</span></div>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-filled" style="width: 100%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sub-item">
+                            <div class="sub-label">疾病值 <span id="disease-value">0</span></div>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-filled" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="status-item food-storage-item">
+                        <div class="status-label">食物储存 <span id="food-storage-value">20</span></div>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-filled" style="width: 10%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">种族</div>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-filled" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 中部选择与事件 -->
+                <section class="center-panel">
+                    <h2>选择与事件</h2>
+                    <div class="button-row">
+                        <button id="get-evolution-points" class="action-btn">获取进化点数</button>
+                        <button id="hunt-btn" class="action-btn">
+                            进行捕猎
+                            <div class="cooldown-progress"></div>
+                        </button>
+                        <button id="rest-btn" class="action-btn">
+                            进行休息
+                            <div class="cooldown-progress"></div>
+                        </button>
+                        <button id="dormancy-btn" class="action-btn">
+                            进行蛰伏
+                            <div class="cooldown-progress"></div>
+                        </button>
+                        <button id="explore-btn" class="action-btn">
+                            探索远处
+                            <div class="cooldown-progress"></div>
+                        </button>
+                    </div>
+                    <div class="button-row">
+                        <button class="action-btn">与其他物种互动</button>
+                        <button class="action-btn">进行锻炼</button>
+                        <button class="action-btn">进行思考</button>
+                        <button class="action-btn">尝试制作工具</button>
+                        <button class="action-btn">尝试交友</button>
+                    </div>
+                </section>
+                
+                <!-- 右侧时间事记 -->
+                <section class="right-panel">
+                    <h2>时间事记</h2>
+                    <div class="timeline-section">
+                        <h3>日常活动</h3>
+                        <div class="timeline-content" id="daily-activities">
+                            <!-- 日常活动内容将在这里显示 -->
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="timeline-section">
+                        <h3>关键事件节点</h3>
+                        <div class="timeline-content" id="key-events">
+                            <div id="evolution-button-container"></div>
+                            <div id="key-events-list" class="key-events-list">
+                                <!-- 关键事件节点内容将在这里显示 -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- 终点页面 - 初始隐藏 -->
+    <div id="theEnd" class="page end-page">
+        <div class="end-overlay"></div>
+        <div class="end-message">你进化到了终点</div>
+    </div>
+
+    <!-- 开发者控制台 - 初始隐藏 -->
+    <div id="de_console" class="console">
+        <div class="console-header">
+            开发者控制台
+            <button id="close-console" class="close-btn">×</button>
+        </div>
+        <div class="console-body">
+            <div class="console-section">
+                <h3>页面切换</h3>
+                <button id="show-death" class="console-btn">死亡页面</button>
+                <button id="show-ongoing" class="console-btn">进行中页面</button>
+                <button id="show-theEnd" class="console-btn">终点页面</button>
+            </div>
+            <div class="console-section">
+                <h3>进化点数控制</h3>
+                <input type="number" id="set-points-input" placeholder="输入进化点数">
+                <button id="set-points" class="console-btn">设置进化点数</button>
+            </div>
+            <div class="console-section">
+                <h3>等级控制</h3>
+                <input type="number" id="set-level-input" placeholder="输入等级 (0-100)" min="0" max="100">
+                <button id="set-level" class="console-btn">设定等级</button>
+            </div>
+            <div class="console-section">
+                <h3>等级需求列表</h3>
+                <div class="requirements-container">
+                    <div id="requirements-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 按顺序引入JS文件 -->
+    <script src="core-system.js"></script>
+    <script src="event-system.js"></script>
+    <script src="state-system.js"></script>
+    <script src="activity-system.js"></script>
+    <script src="evolution-system.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
