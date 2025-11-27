@@ -251,4 +251,290 @@ class ActivitySystem extends CoreSystem {
         this.stateSystem.updateUI();
         this.stateSystem.setButtonStates();
     }
+
+    // 锻炼活动
+    exercise() {
+        if (!this.stateSystem.canStartActivity('exercise')) {
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addDailyActivity(`无法锻炼，当前状态: ${this.stateSystem.activityState}`);
+            }
+            return;
+        }
+        
+        // 设置锻炼冷却
+        this.stateSystem.cooldowns.exercise = 8;
+        this.stateSystem.activityState = 'exercising';
+        
+        // 设置全局冷却
+        this.stateSystem.globalCooldown = this.stateSystem.globalCooldownDuration;
+        
+        // 消耗饥饿值
+        this.stateSystem.hunger = Math.min(100, this.stateSystem.hunger + 10);
+        
+        // 有几率增加力量和速度（收益不高）
+        let strengthGain = 0;
+        let speedGain = 0;
+        
+        if (Math.random() < 0.7) { // 70%几率增加力量
+            strengthGain = 0.01 + Math.random() * 0.02; // 很小的增益
+            this.stateSystem.strength = Math.min(this.stateSystem.maxAttribute, this.stateSystem.strength + strengthGain);
+        }
+        
+        if (Math.random() < 0.6) { // 60%几率增加速度
+            speedGain = 0.01 + Math.random() * 0.02; // 很小的增益
+            this.stateSystem.speed = Math.min(this.stateSystem.maxAttribute, this.stateSystem.speed + speedGain);
+        }
+        
+        // 记录活动
+        if (window.evolutionSystem) {
+            let message = "进行了锻炼";
+            if (strengthGain > 0 || speedGain > 0) {
+                message += "，";
+                if (strengthGain > 0) message += `力量+${strengthGain.toFixed(3)}`;
+                if (strengthGain > 0 && speedGain > 0) message += "，";
+                if (speedGain > 0) message += `速度+${speedGain.toFixed(3)}`;
+            }
+            window.evolutionSystem.addDailyActivity(message);
+        }
+        
+        // 锻炼完成后回到空闲状态
+        setTimeout(() => {
+            this.stateSystem.activityState = 'idle';
+            this.stateSystem.setButtonStates();
+        }, 100);
+        
+        this.stateSystem.updateUI();
+        this.stateSystem.setButtonStates();
+    }
+
+    // 思考活动
+    think() {
+        if (!this.stateSystem.canStartActivity('think')) {
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addDailyActivity(`无法思考，当前状态: ${this.stateSystem.activityState}`);
+            }
+            return;
+        }
+        
+        // 设置思考冷却
+        this.stateSystem.cooldowns.think = 12;
+        this.stateSystem.activityState = 'thinking';
+        
+        // 消耗饥饿值
+        this.stateSystem.hunger = Math.min(100, this.stateSystem.hunger + 5);
+        
+        // 增加智慧
+        const intelligenceGain = 0.05 + Math.random() * 0.05;
+        this.stateSystem.intelligence = Math.min(this.stateSystem.maxAttribute, this.stateSystem.intelligence + intelligenceGain);
+        
+        // 记录活动
+        if (window.evolutionSystem) {
+            window.evolutionSystem.addDailyActivity(`进行了思考，智慧+${intelligenceGain.toFixed(3)}`);
+        }
+        
+        // 如果是第一次思考，解锁心理健康值和高级互动
+        if (window.evolutionRouteSystem && !window.evolutionRouteSystem.hasThought) {
+            window.evolutionRouteSystem.onThink();
+        }
+        
+        // 思考完成后回到空闲状态
+        setTimeout(() => {
+            this.stateSystem.activityState = 'idle';
+            this.stateSystem.setButtonStates();
+        }, 100);
+        
+        this.stateSystem.updateUI();
+        this.stateSystem.setButtonStates();
+    }
+
+    // 与其他物种互动
+    interact() {
+        if (!this.stateSystem.canStartActivity('interact')) {
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addDailyActivity(`无法互动，当前状态: ${this.stateSystem.activityState}`);
+            }
+            return;
+        }
+        
+        // 设置互动冷却
+        this.stateSystem.cooldowns.interact = 15;
+        this.stateSystem.activityState = 'interacting';
+        
+        // 消耗饥饿值
+        this.stateSystem.hunger = Math.min(100, this.stateSystem.hunger + 8);
+        
+        // 三种可能的互动结果
+        const result = Math.random();
+        let message = "";
+        
+        if (result < 0.4) { // 40%几率合作
+            message = "与其他物种进行了合作";
+            // 合作可能带来食物或智慧增长
+            if (Math.random() < 0.6) {
+                const foodGained = 3 + Math.random() * 5;
+                this.stateSystem.foodStorage += foodGained;
+                message += `，获得了${this.formatNumber(foodGained)}点食物`;
+            } else {
+                const intelligenceGain = 0.02 + Math.random() * 0.03;
+                this.stateSystem.intelligence = Math.min(this.stateSystem.maxAttribute, this.stateSystem.intelligence + intelligenceGain);
+                message += `，智慧+${intelligenceGain.toFixed(3)}`;
+            }
+            // 增加心理健康值
+            this.stateSystem.mentalHealth = Math.min(100, this.stateSystem.mentalHealth + 5);
+            
+        } else if (result < 0.7) { // 30%几率竞争
+            message = "与其他物种发生了竞争";
+            // 竞争可能带来属性增长但消耗更多
+            this.stateSystem.hunger = Math.min(100, this.stateSystem.hunger + 5);
+            if (Math.random() < 0.5) {
+                const strengthGain = 0.02 + Math.random() * 0.03;
+                this.stateSystem.strength = Math.min(this.stateSystem.maxAttribute, this.stateSystem.strength + strengthGain);
+                message += `，力量+${strengthGain.toFixed(3)}`;
+            } else {
+                const speedGain = 0.02 + Math.random() * 0.03;
+                this.stateSystem.speed = Math.min(this.stateSystem.maxAttribute, this.stateSystem.speed + speedGain);
+                message += `，速度+${speedGain.toFixed(3)}`;
+            }
+            // 轻微减少心理健康值
+            this.stateSystem.mentalHealth = Math.max(0, this.stateSystem.mentalHealth - 3);
+            
+        } else { // 30%几率杀戮
+            message = "与其他物种发生了杀戮";
+            // 杀戮可能带来大量食物但减少心理健康
+            const foodGained = 8 + Math.random() * 10;
+            this.stateSystem.foodStorage += foodGained;
+            message += `，获得了${this.formatNumber(foodGained)}点食物`;
+            // 大幅减少心理健康值
+            this.stateSystem.mentalHealth = Math.max(0, this.stateSystem.mentalHealth - 10);
+            
+            // 小几率受伤
+            if (Math.random() < 0.3 && this.eventSystem) {
+                this.eventSystem.triggerInjury(0.5 + Math.random());
+                message += "，但受伤了";
+            }
+        }
+        
+        // 记录活动
+        if (window.evolutionSystem) {
+            window.evolutionSystem.addDailyActivity(message);
+            window.evolutionSystem.addKeyEvent(`物种互动: ${message}`);
+        }
+        
+        // 互动完成后回到空闲状态
+        setTimeout(() => {
+            this.stateSystem.activityState = 'idle';
+            this.stateSystem.setButtonStates();
+        }, 100);
+        
+        this.stateSystem.updateUI();
+        this.stateSystem.setButtonStates();
+    }
+
+    // 尝试制作工具
+    makeTool() {
+        if (!this.stateSystem.canStartActivity('tool')) {
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addDailyActivity(`无法制作工具，当前状态: ${this.stateSystem.activityState}`);
+            }
+            return;
+        }
+        
+        // 设置制作工具冷却
+        this.stateSystem.cooldowns.tool = 20;
+        this.stateSystem.activityState = 'making_tool';
+        
+        // 消耗饥饿值
+        this.stateSystem.hunger = Math.min(100, this.stateSystem.hunger + 12);
+        
+        // 制作工具需要智慧和力量
+        const successChance = (this.stateSystem.intelligence * 0.01) + (this.stateSystem.strength * 0.005);
+        
+        if (Math.random() < successChance) {
+            // 制作成功
+            const intelligenceGain = 0.03 + Math.random() * 0.04;
+            this.stateSystem.intelligence = Math.min(this.stateSystem.maxAttribute, this.stateSystem.intelligence + intelligenceGain);
+            
+            // 增加心理健康值
+            this.stateSystem.mentalHealth = Math.min(100, this.stateSystem.mentalHealth + 8);
+            
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addDailyActivity(`成功制作了工具，智慧+${intelligenceGain.toFixed(3)}，心理健康提升`);
+                window.evolutionSystem.addKeyEvent("成功制作了第一个工具！");
+            }
+        } else {
+            // 制作失败
+            this.stateSystem.mentalHealth = Math.max(0, this.stateSystem.mentalHealth - 5);
+            
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addDailyActivity("尝试制作工具但失败了");
+            }
+        }
+        
+        // 制作工具完成后回到空闲状态
+        setTimeout(() => {
+            this.stateSystem.activityState = 'idle';
+            this.stateSystem.setButtonStates();
+        }, 100);
+        
+        this.stateSystem.updateUI();
+        this.stateSystem.setButtonStates();
+    }
+
+    // 尝试交友
+    socialize() {
+        if (!this.stateSystem.canStartActivity('social')) {
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addDailyActivity(`无法交友，当前状态: ${this.stateSystem.activityState}`);
+            }
+            return;
+        }
+        
+        // 设置交友冷却
+        this.stateSystem.cooldowns.social = 10;
+        this.stateSystem.activityState = 'socializing';
+        
+        // 消耗饥饿值
+        this.stateSystem.hunger = Math.min(100, this.stateSystem.hunger + 6);
+        
+        // 交友需要智慧和心理健康
+        const successChance = (this.stateSystem.intelligence * 0.008) + (this.stateSystem.mentalHealth * 0.005);
+        
+        if (Math.random() < successChance) {
+            // 交友成功
+            const mentalHealthGain = 5 + Math.random() * 10;
+            this.stateSystem.mentalHealth = Math.min(100, this.stateSystem.mentalHealth + mentalHealthGain);
+            
+            // 小几率获得食物
+            if (Math.random() < 0.4) {
+                const foodGained = 2 + Math.random() * 4;
+                this.stateSystem.foodStorage += foodGained;
+                
+                if (window.evolutionSystem) {
+                    window.evolutionSystem.addDailyActivity(`成功交友，心理健康+${mentalHealthGain.toFixed(1)}，获得了${this.formatNumber(foodGained)}点食物`);
+                }
+            } else {
+                if (window.evolutionSystem) {
+                    window.evolutionSystem.addDailyActivity(`成功交友，心理健康+${mentalHealthGain.toFixed(1)}`);
+                }
+            }
+            
+            window.evolutionSystem.addKeyEvent("成功建立了第一个社交关系！");
+        } else {
+            // 交友失败
+            this.stateSystem.mentalHealth = Math.max(0, this.stateSystem.mentalHealth - 8);
+            
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addDailyActivity("尝试交友但被拒绝了");
+            }
+        }
+        
+        // 交友完成后回到空闲状态
+        setTimeout(() => {
+            this.stateSystem.activityState = 'idle';
+            this.stateSystem.setButtonStates();
+        }, 100);
+        
+        this.stateSystem.updateUI();
+        this.stateSystem.setButtonStates();
+    }
 }
