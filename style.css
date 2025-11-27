@@ -70,11 +70,16 @@ html, body {
     align-items: center;
     justify-content: center;
     transition: all 0.3s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .theme-toggle:hover {
     background-color: var(--button-hover);
     transform: scale(1.1);
+}
+
+.theme-toggle:active {
+    transform: scale(0.95);
 }
 
 /* 页面容器 */
@@ -97,6 +102,7 @@ html, body {
     z-index: 100;
     position: fixed;
     height: 100%;
+    flex-direction: column;
 }
 
 .death-message {
@@ -123,6 +129,7 @@ html, body {
     z-index: 90;
     position: fixed;
     height: 100%;
+    flex-direction: column;
 }
 
 .end-message {
@@ -471,6 +478,15 @@ html, body {
         font-size: 14px;
         padding: 12px 8px;
     }
+    
+    /* 移动设备上的主题按钮优化 */
+    .theme-toggle {
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+        top: 15px;
+        right: 15px;
+    }
 }
 
 /* 针对小屏幕手机的额外优化 */
@@ -505,9 +521,9 @@ html, body {
     }
     
     .theme-toggle {
-        width: 35px;
-        height: 35px;
-        font-size: 16px;
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
     }
 }
 
@@ -645,5 +661,116 @@ html, body {
         left: 5%;
         top: 15%;
         resize: none;
+    }
+}
+
+/* 开始页面样式 */
+.start-page {
+    background-color: var(--bg-color);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.start-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.left-start-panel,
+.right-start-panel {
+    flex: 1;
+    background-color: var(--panel-bg);
+}
+
+.center-start-panel {
+    flex: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--panel-bg);
+    text-align: center;
+    padding: 20px;
+}
+
+.center-start-panel h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: var(--text-color);
+}
+
+.center-start-panel p {
+    font-size: 18px;
+    margin-bottom: 30px;
+    color: var(--text-color);
+}
+
+.start-btn {
+    padding: 20px 40px;
+    font-size: 24px;
+    background-color: var(--button-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: all 0.3s;
+}
+
+.start-btn:hover {
+    background-color: var(--button-hover);
+    transform: scale(1.05);
+}
+
+/* 控制台新增样式 */
+.console-section h4 {
+    margin: 10px 0 5px 0;
+    font-size: 13px;
+    color: var(--text-color);
+}
+
+.attribute-control {
+    display: flex;
+    margin-bottom: 5px;
+}
+
+.attribute-control input {
+    flex: 1;
+    margin-right: 5px;
+}
+
+/* 移动设备上的开始页面优化 */
+@media (max-width: 768px) {
+    .start-container {
+        flex-direction: column;
+    }
+    
+    .left-start-panel,
+    .right-start-panel {
+        display: none;
+    }
+    
+    .center-start-panel {
+        flex: 1;
+    }
+    
+    .center-start-panel h1 {
+        font-size: 28px;
+    }
+    
+    .center-start-panel p {
+        font-size: 16px;
+    }
+    
+    .start-btn {
+        padding: 15px 30px;
+        font-size: 20px;
     }
 }
