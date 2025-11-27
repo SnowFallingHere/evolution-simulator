@@ -1,45 +1,119 @@
 // 主程序 - 初始化所有系统
 document.addEventListener('DOMContentLoaded', function() {
-    // 初始化事件系统
-    const eventSystem = new EventSystem();
-    window.eventSystem = eventSystem;
+    console.log("DOM加载完成，开始初始化系统");
     
-    // 初始化状态系统
-    const stateSystem = new StateSystem(eventSystem);
-    window.stateSystem = stateSystem;
-    
-    // 初始化活动系统
-    const activitySystem = new ActivitySystem(stateSystem, eventSystem);
-    window.activitySystem = activitySystem;
-    
-    // 初始化进化系统
-    const evolutionSystem = new EvolutionSystem(stateSystem, eventSystem);
-    window.evolutionSystem = evolutionSystem;
-    
-    // 设置活动按钮事件监听器
-    setupActivityListeners(activitySystem);
-    
-    // 初始化页面切换和控制台
-    initPageAndConsole(evolutionSystem, stateSystem);
+    try {
+        // 首先隐藏所有页面，防止显示错误页面
+        const pages = document.querySelectorAll('.page');
+        pages.forEach(page => {
+            page.style.display = 'none';
+        });
+        
+        // 初始化事件系统
+        const eventSystem = new EventSystem();
+        window.eventSystem = eventSystem;
+        
+        // 初始化状态系统
+        const stateSystem = new StateSystem(eventSystem);
+        window.stateSystem = stateSystem;
+        
+        // 初始化活动系统
+        const activitySystem = new ActivitySystem(stateSystem, eventSystem);
+        window.activitySystem = activitySystem;
+        
+        // 初始化进化系统
+        const evolutionSystem = new EvolutionSystem(stateSystem, eventSystem);
+        window.evolutionSystem = evolutionSystem;
+        
+        // 初始化进化路线系统（最后初始化，它会控制页面显示）
+        const evolutionRouteSystem = new EvolutionRouteSystem(stateSystem, eventSystem, evolutionSystem);
+        window.evolutionRouteSystem = evolutionRouteSystem;
+        
+        // 设置活动按钮事件监听器
+        setupActivityListeners(activitySystem);
+        
+        // 初始化页面切换和控制台
+        initPageAndConsole(evolutionSystem, stateSystem);
+        
+        console.log("所有系统初始化完成");
+        
+    } catch (error) {
+        console.error("初始化过程中出现错误:", error);
+        // 如果出现错误，至少显示开始页面
+        const startPage = document.getElementById('start');
+        if (startPage) {
+            startPage.style.display = 'flex';
+        }
+    }
 });
 
 // 设置活动按钮事件监听器
 function setupActivityListeners(activitySystem) {
-    document.getElementById('hunt-btn').addEventListener('click', () => {
-        activitySystem.hunt();
-    });
-    
-    document.getElementById('rest-btn').addEventListener('click', () => {
-        activitySystem.rest();
-    });
-    
-    document.getElementById('dormancy-btn').addEventListener('click', () => {
-        activitySystem.dormancy();
-    });
-    
-    document.getElementById('explore-btn').addEventListener('click', () => {
-        activitySystem.explore();
-    });
+    // 延迟绑定，确保按钮存在
+    setTimeout(() => {
+        // 定义所有冷却按钮的配置
+        const coolingButtonConfigs = [
+            {
+                buttonId: 'hunt-btn',
+                cooldownKey: 'hunt',
+                maxCooldown: 10,
+                onClickCallback: () => activitySystem.hunt()
+            },
+            {
+                buttonId: 'rest-btn',
+                cooldownKey: 'rest',
+                maxCooldown: 5,
+                onClickCallback: () => activitySystem.rest()
+            },
+            {
+                buttonId: 'dormancy-btn',
+                cooldownKey: 'dormancy',
+                maxCooldown: 8,
+                onClickCallback: () => activitySystem.dormancy()
+            },
+            {
+                buttonId: 'explore-btn',
+                cooldownKey: 'explore',
+                maxCooldown: 7,
+                onClickCallback: () => activitySystem.explore()
+            },
+            {
+                buttonId: 'exercise-btn',
+                cooldownKey: 'exercise',
+                maxCooldown: 8,
+                onClickCallback: () => activitySystem.exercise()
+            },
+            {
+                buttonId: 'think-btn',
+                cooldownKey: 'think',
+                maxCooldown: 12,
+                onClickCallback: () => activitySystem.think()
+            },
+            {
+                buttonId: 'interact-btn',
+                cooldownKey: 'interact',
+                maxCooldown: 15,
+                onClickCallback: () => activitySystem.interact()
+            },
+            {
+                buttonId: 'tool-btn',
+                cooldownKey: 'tool',
+                maxCooldown: 20,
+                onClickCallback: () => activitySystem.makeTool()
+            },
+            {
+                buttonId: 'social-btn',
+                cooldownKey: 'social',
+                maxCooldown: 10,
+                onClickCallback: () => activitySystem.socialize()
+            }
+        ];
+        
+        // 批量创建冷却按钮
+        CoolingBtnRoll.createCoolingButtons(coolingButtonConfigs);
+        
+        console.log("冷却按钮组件初始化完成");
+    }, 1000);
 }
 
 // 初始化页面切换和控制台
@@ -65,109 +139,263 @@ function initPageAndConsole(evolutionSystem, stateSystem) {
     
     const themeToggle = document.getElementById('theme-toggle');
     
-    // 初始显示进行中页面
-    showPage('ongoing');
+    // 时间暂停状态
+    let timePaused = false;
     
-    // 显示死亡页面
-    showDeathBtn.addEventListener('click', function() {
-        showPage('death');
-    });
+    // 控制台解锁机制 - 10秒内点击主题切换按钮10次
+    let themeClickCount = 0;
+    let themeClickTimer = null;
     
-    // 显示进行中页面
-    showOngoingBtn.addEventListener('click', function() {
-        showPage('ongoing');
-    });
+    // 主题切换按钮事件监听 - 添加控制台解锁功能
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function(e) {
+            // 执行主题切换功能
+            const body = document.body;
+            if (body.classList.contains('light-theme')) {
+                body.classList.remove('light-theme');
+                body.classList.add('dark-theme');
+                themeToggle.textContent = '☀️';
+            } else {
+                body.classList.remove('dark-theme');
+                body.classList.add('light-theme');
+                themeToggle.textContent = '🌙';
+            }
+            
+            // 控制台解锁计数逻辑
+            themeClickCount++;
+            
+            // 清除之前的计时器
+            if (themeClickTimer) {
+                clearTimeout(themeClickTimer);
+            }
+            
+            // 设置新的计时器，10秒后重置计数
+            themeClickTimer = setTimeout(function() {
+                themeClickCount = 0;
+                console.log("控制台解锁计数已重置");
+            }, 10000);
+            
+            // 检查是否达到解锁条件
+            if (themeClickCount >= 10) {
+                if (consoleElement) {
+                    consoleElement.style.display = 'block';
+                }
+                themeClickCount = 0;
+                if (themeClickTimer) {
+                    clearTimeout(themeClickTimer);
+                }
+                
+                // 添加解锁提示
+                if (window.evolutionSystem) {
+                    window.evolutionSystem.addKeyEvent("开发者控制台已解锁");
+                }
+                
+                console.log("控制台已解锁");
+            }
+            
+            console.log(`主题按钮点击次数: ${themeClickCount}`);
+        });
+    }
     
-    // 显示终点页面
-    showTheEndBtn.addEventListener('click', function() {
-        showPage('theEnd');
-    });
+    // 页面切换按钮事件监听
+    if (showDeathBtn) {
+        showDeathBtn.addEventListener('click', function() {
+            showPage('death');
+        });
+    }
+    
+    if (showOngoingBtn) {
+        showOngoingBtn.addEventListener('click', function() {
+            showPage('ongoing');
+        });
+    }
+    
+    if (showTheEndBtn) {
+        showTheEndBtn.addEventListener('click', function() {
+            showPage('theEnd');
+        });
+    }
     
     // 关闭控制台
-    closeConsoleBtn.addEventListener('click', function() {
-        consoleElement.style.display = 'none';
-    });
+    if (closeConsoleBtn) {
+        closeConsoleBtn.addEventListener('click', function() {
+            if (consoleElement) {
+                consoleElement.style.display = 'none';
+            }
+        });
+    }
     
     // 设置进化点数
-    setPointsBtn.addEventListener('click', function() {
-        const points = parseFloat(setPointsInput.value);
-        if (!isNaN(points) && points >= 0) {
-            evolutionSystem.setEvolutionPoints(points);
-            setPointsInput.value = '';
-        }
-    });
+    if (setPointsBtn && setPointsInput) {
+        setPointsBtn.addEventListener('click', function() {
+            const points = parseFloat(setPointsInput.value);
+            if (!isNaN(points) && points >= 0) {
+                evolutionSystem.setEvolutionPoints(points);
+                setPointsInput.value = '';
+            }
+        });
+    }
     
     // 设置等级
-    setLevelBtn.addEventListener('click', function() {
-        const level = parseInt(setLevelInput.value);
-        if (!isNaN(level) && level >= 0 && level <= 100) {
-            evolutionSystem.setEvolutionLevel(level);
-            setLevelInput.value = '';
-        }
-    });
+    if (setLevelBtn && setLevelInput) {
+        setLevelBtn.addEventListener('click', function() {
+            const level = parseInt(setLevelInput.value);
+            if (!isNaN(level) && level >= 0 && level <= 100) {
+                evolutionSystem.setEvolutionLevel(level);
+                setLevelInput.value = '';
+            }
+        });
+    }
     
-    // 主题切换
-    themeToggle.addEventListener('click', function() {
-        const body = document.body;
-        if (body.classList.contains('light-theme')) {
-            body.classList.remove('light-theme');
-            body.classList.add('dark-theme');
-            themeToggle.textContent = '☀️';
-        } else {
-            body.classList.remove('dark-theme');
-            body.classList.add('light-theme');
-            themeToggle.textContent = '🌙';
-        }
-    });
+    // 时间暂停/恢复
+    const pauseTimeBtn = document.getElementById('pause-time');
+    if (pauseTimeBtn) {
+        pauseTimeBtn.addEventListener('click', function() {
+            timePaused = !timePaused;
+            stateSystem.setTimePaused(timePaused);
+            pauseTimeBtn.textContent = timePaused ? '恢复时间' : '暂停时间';
+            
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addKeyEvent(timePaused ? "时间已暂停" : "时间已恢复");
+            }
+        });
+    }
+    
+    // 设置属性值
+    const setStrengthBtn = document.getElementById('set-strength');
+    const setStrengthInput = document.getElementById('set-strength-input');
+    if (setStrengthBtn && setStrengthInput) {
+        setStrengthBtn.addEventListener('click', function() {
+            const value = parseFloat(setStrengthInput.value);
+            if (!isNaN(value) && value >= 0 && value <= stateSystem.maxAttribute) {
+                stateSystem.strength = value;
+                stateSystem.updateUI();
+                setStrengthInput.value = '';
+            }
+        });
+    }
+    
+    const setSpeedBtn = document.getElementById('set-speed');
+    const setSpeedInput = document.getElementById('set-speed-input');
+    if (setSpeedBtn && setSpeedInput) {
+        setSpeedBtn.addEventListener('click', function() {
+            const value = parseFloat(setSpeedInput.value);
+            if (!isNaN(value) && value >= 0 && value <= stateSystem.maxAttribute) {
+                stateSystem.speed = value;
+                stateSystem.updateUI();
+                setSpeedInput.value = '';
+            }
+        });
+    }
+    
+    const setIntelligenceBtn = document.getElementById('set-intelligence');
+    const setIntelligenceInput = document.getElementById('set-intelligence-input');
+    if (setIntelligenceBtn && setIntelligenceInput) {
+        setIntelligenceBtn.addEventListener('click', function() {
+            const value = parseFloat(setIntelligenceInput.value);
+            if (!isNaN(value) && value >= 0 && value <= stateSystem.maxAttribute) {
+                stateSystem.intelligence = value;
+                stateSystem.updateUI();
+                setIntelligenceInput.value = '';
+            }
+        });
+    }
+    
+    const setHungerBtn = document.getElementById('set-hunger');
+    const setHungerInput = document.getElementById('set-hunger-input');
+    if (setHungerBtn && setHungerInput) {
+        setHungerBtn.addEventListener('click', function() {
+            const value = parseFloat(setHungerInput.value);
+            if (!isNaN(value) && value >= 0 && value <= 100) {
+                stateSystem.hunger = value;
+                stateSystem.updateUI();
+                setHungerInput.value = '';
+            }
+        });
+    }
+    
+    const setDiseaseBtn = document.getElementById('set-disease');
+    const setDiseaseInput = document.getElementById('set-disease-input');
+    if (setDiseaseBtn && setDiseaseInput) {
+        setDiseaseBtn.addEventListener('click', function() {
+            const value = parseFloat(setDiseaseInput.value);
+            if (!isNaN(value) && value >= 0 && value <= 100) {
+                stateSystem.disease = value;
+                stateSystem.updateUI();
+                setDiseaseInput.value = '';
+            }
+        });
+    }
+    
+    const setMentalHealthBtn = document.getElementById('set-mental-health');
+    const setMentalHealthInput = document.getElementById('set-mental-health-input');
+    if (setMentalHealthBtn && setMentalHealthInput) {
+        setMentalHealthBtn.addEventListener('click', function() {
+            const value = parseFloat(setMentalHealthInput.value);
+            if (!isNaN(value) && value >= 0 && value <= 100) {
+                stateSystem.mentalHealth = value;
+                stateSystem.updateUI();
+                setMentalHealthInput.value = '';
+            }
+        });
+    }
     
     // 控制台拖拽功能
-    makeConsoleDraggable(consoleElement);
+    if (consoleElement) {
+        makeConsoleDraggable(consoleElement);
+    }
     
-    // 控制台触发机制 - 10秒内点击进化点数进度条10次
-    let clickCount = 0;
-    let clickTimer = null;
-    
-    evolutionPointsProgress.addEventListener('click', function() {
-        clickCount++;
+    // 进化点数进度条点击事件（保留原有功能，但改为在桌面端有效）
+    if (evolutionPointsProgress) {
+        let clickCount = 0;
+        let clickTimer = null;
         
-        if (clickTimer) {
-            clearTimeout(clickTimer);
-        }
-        
-        clickTimer = setTimeout(function() {
-            clickCount = 0;
-        }, 10000);
-        
-        if (clickCount >= 10) {
-            consoleElement.style.display = 'block';
-            clickCount = 0;
-            if (clickTimer) {
-                clearTimeout(clickTimer);
+        evolutionPointsProgress.addEventListener('click', function() {
+            // 在移动端，点击一次就显示控制台
+            if (window.innerWidth <= 768) {
+                if (consoleElement) {
+                    consoleElement.style.display = 'block';
+                }
+            } else {
+                // 桌面端保持原有逻辑
+                clickCount++;
+                
+                if (clickTimer) {
+                    clearTimeout(clickTimer);
+                }
+                
+                clickTimer = setTimeout(function() {
+                    clickCount = 0;
+                }, 10000);
+                
+                if (clickCount >= 10) {
+                    if (consoleElement) {
+                        consoleElement.style.display = 'block';
+                    }
+                    clickCount = 0;
+                    if (clickTimer) {
+                        clearTimeout(clickTimer);
+                    }
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 // 全局函数 - 显示指定页面
 function showPage(pageId) {
-    const deathPage = document.getElementById('death');
-    const ongoingPage = document.getElementById('ongoing');
-    const theEndPage = document.getElementById('theEnd');
+    console.log("全局showPage被调用:", pageId);
+    const pages = document.querySelectorAll('.page');
+    pages.forEach(page => {
+        page.style.display = 'none';
+    });
     
-    deathPage.style.display = 'none';
-    ongoingPage.style.display = 'none';
-    theEndPage.style.display = 'none';
-    
-    switch(pageId) {
-        case 'death':
-            deathPage.style.display = 'flex';
-            break;
-        case 'ongoing':
-            ongoingPage.style.display = 'flex';
-            break;
-        case 'theEnd':
-            theEndPage.style.display = 'flex';
-            break;
+    const targetPage = document.getElementById(pageId);
+    if (targetPage) {
+        targetPage.style.display = 'flex';
+        console.log("成功显示页面:", pageId);
+    } else {
+        console.error("页面未找到:", pageId);
     }
 }
 
@@ -175,6 +403,8 @@ function showPage(pageId) {
 function makeConsoleDraggable(element) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     const header = element.querySelector('.console-header');
+    
+    if (!header) return;
     
     header.onmousedown = dragMouseDown;
     
