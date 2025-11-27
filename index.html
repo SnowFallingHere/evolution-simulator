@@ -5,17 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>进化模拟器</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* 临时样式，确保开始页面可见 */
+        .start-page {
+            display: flex !important;
+        }
+        .page {
+            display: none;
+        }
+    </style>
 </head>
 <body class="light-theme">
     <!-- 主题切换按钮 -->
     <button id="theme-toggle" class="theme-toggle">🌙</button>
     
+    <!-- 开始页面将由JS创建 -->
+    
     <!-- 死亡页面 - 初始隐藏 -->
     <div id="death" class="page death-page">
         <div class="death-message">你失败了</div>
+        <button onclick="window.evolutionRouteSystem.showPage('start')" style="margin-top: 20px; padding: 10px 20px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">返回开始</button>
     </div>
 
-    <!-- 进行中页面 - 初始显示 -->
+    <!-- 进行中页面 - 初始隐藏 -->
     <div id="ongoing" class="page ongoing-page">
         <div class="container">
             <!-- 顶部标题区域 -->
@@ -58,7 +70,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="sub-item">
+                        <div class="sub-item" id="intelligence-item">
                             <div class="sub-label">智慧值 <span id="intelligence-value">1.0</span></div>
                             <div class="progress-container">
                                 <div class="progress-bar">
@@ -77,7 +89,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="sub-item">
+                        <div class="sub-item" id="mental-health-item">
                             <div class="sub-label">心理健康值 <span id="mental-health-value">100</span></div>
                             <div class="progress-container">
                                 <div class="progress-bar">
@@ -135,11 +147,11 @@
                         </button>
                     </div>
                     <div class="button-row">
-                        <button class="action-btn">与其他物种互动</button>
-                        <button class="action-btn">进行锻炼</button>
-                        <button class="action-btn">进行思考</button>
-                        <button class="action-btn">尝试制作工具</button>
-                        <button class="action-btn">尝试交友</button>
+                        <button id="interact-btn" class="action-btn">与其他物种互动</button>
+                        <button id="exercise-btn" class="action-btn">进行锻炼</button>
+                        <button id="think-btn" class="action-btn">进行思考</button>
+                        <button id="tool-btn" class="action-btn">尝试制作工具</button>
+                        <button id="social-btn" class="action-btn">尝试交友</button>
                     </div>
                 </section>
                 
@@ -171,6 +183,7 @@
     <div id="theEnd" class="page end-page">
         <div class="end-overlay"></div>
         <div class="end-message">你进化到了终点</div>
+        <button onclick="window.evolutionRouteSystem.showPage('start')" style="margin-top: 20px; padding: 10px 20px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">返回开始</button>
     </div>
 
     <!-- 开发者控制台 - 初始隐藏 -->
@@ -187,6 +200,10 @@
                 <button id="show-theEnd" class="console-btn">终点页面</button>
             </div>
             <div class="console-section">
+                <h3>时间控制</h3>
+                <button id="pause-time" class="console-btn">暂停时间</button>
+            </div>
+            <div class="console-section">
                 <h3>进化点数控制</h3>
                 <input type="number" id="set-points-input" placeholder="输入进化点数">
                 <button id="set-points" class="console-btn">设置进化点数</button>
@@ -195,6 +212,42 @@
                 <h3>等级控制</h3>
                 <input type="number" id="set-level-input" placeholder="输入等级 (0-100)" min="0" max="100">
                 <button id="set-level" class="console-btn">设定等级</button>
+            </div>
+            <div class="console-section">
+                <h3>属性控制</h3>
+                <h4>力量</h4>
+                <div class="attribute-control">
+                    <input type="number" id="set-strength-input" placeholder="力量值" min="0" max="180" step="0.1">
+                    <button id="set-strength" class="console-btn">设定</button>
+                </div>
+                <h4>速度</h4>
+                <div class="attribute-control">
+                    <input type="number" id="set-speed-input" placeholder="速度值" min="0" max="180" step="0.1">
+                    <button id="set-speed" class="console-btn">设定</button>
+                </div>
+                <h4>智慧</h4>
+                <div class="attribute-control">
+                    <input type="number" id="set-intelligence-input" placeholder="智慧值" min="0" max="180" step="0.1">
+                    <button id="set-intelligence" class="console-btn">设定</button>
+                </div>
+            </div>
+            <div class="console-section">
+                <h3>状态控制</h3>
+                <h4>饥饿值</h4>
+                <div class="attribute-control">
+                    <input type="number" id="set-hunger-input" placeholder="饥饿值" min="0" max="100">
+                    <button id="set-hunger" class="console-btn">设定</button>
+                </div>
+                <h4>疾病值</h4>
+                <div class="attribute-control">
+                    <input type="number" id="set-disease-input" placeholder="疾病值" min="0" max="100">
+                    <button id="set-disease" class="console-btn">设定</button>
+                </div>
+                <h4>心理健康值</h4>
+                <div class="attribute-control">
+                    <input type="number" id="set-mental-health-input" placeholder="心理健康值" min="0" max="100">
+                    <button id="set-mental-health" class="console-btn">设定</button>
+                </div>
             </div>
             <div class="console-section">
                 <h3>等级需求列表</h3>
@@ -211,6 +264,7 @@
     <script src="state-system.js"></script>
     <script src="activity-system.js"></script>
     <script src="evolution-system.js"></script>
+    <script src="evolution_route.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
