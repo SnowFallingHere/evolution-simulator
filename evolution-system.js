@@ -10,6 +10,8 @@ class EvolutionSystem extends CoreSystem {
         this.requiredPoints = this.calculateRequiredPoints(1);
         
         this.hasShownEvolutionEvent = false;
+        this.evolveButton = null; // 保存按钮引用避免重复创建
+        this.evolutionButtonContainer = null; // 保存容器引用
         
         this.init();
     }
@@ -18,6 +20,9 @@ class EvolutionSystem extends CoreSystem {
         this.startNaturalGrowth();
         this.setupEventListeners();
         this.updateRequirementsList();
+        
+        // 预获取容器引用
+        this.evolutionButtonContainer = document.getElementById('evolution-button-container');
     }
     
     calculateRequiredPoints(N) {
@@ -40,6 +45,9 @@ class EvolutionSystem extends CoreSystem {
     }
     
     calculateNaturalGrowth() {
+        // 如果时间暂停，不增长
+        if (this.stateSystem.timePaused) return 0;
+        
         // 修复0级增长问题
         if (this.evolutionLevel === 0) {
             return 0.1 * this.stateSystem.getHealthMultiplier();
@@ -96,6 +104,11 @@ class EvolutionSystem extends CoreSystem {
             
             this.updateUI();
             this.updateRequirementsList();
+            
+            // 通知进化路线系统更新
+            if (window.evolutionRouteSystem) {
+                window.evolutionRouteSystem.onEvolution();
+            }
         }
     }
     
@@ -106,17 +119,27 @@ class EvolutionSystem extends CoreSystem {
     }
     
     checkEvolution() {
-        const evolutionButtonContainer = document.getElementById('evolution-button-container');
-        evolutionButtonContainer.innerHTML = '';
+        // 确保容器存在
+        if (!this.evolutionButtonContainer) {
+            this.evolutionButtonContainer = document.getElementById('evolution-button-container');
+            if (!this.evolutionButtonContainer) return;
+        }
         
         if (this.evolutionPoints >= this.requiredPoints && this.evolutionLevel < 100) {
-            const evolveButton = document.createElement('button');
-            evolveButton.className = 'evolve-btn';
-            evolveButton.textContent = `进化到等级 ${this.evolutionLevel + 1}`;
-            evolveButton.addEventListener('click', () => {
-                this.evolve();
-            });
-            evolutionButtonContainer.appendChild(evolveButton);
+            // 只创建一次按钮
+            if (!this.evolveButton) {
+                this.evolveButton = document.createElement('button');
+                this.evolveButton.className = 'evolve-btn';
+                this.evolveButton.addEventListener('click', () => {
+                    this.evolve();
+                });
+                this.evolutionButtonContainer.appendChild(this.evolveButton);
+            }
+            
+            // 更新按钮文本和显示状态
+            this.evolveButton.textContent = `进化到等级 ${this.evolutionLevel + 1}`;
+            this.evolveButton.style.display = 'block';
+            this.evolveButton.disabled = false;
             
             if (!this.hasShownEvolutionEvent) {
                 this.addKeyEvent(`已达到进化条件，可以进化到等级 ${this.evolutionLevel + 1}`);
@@ -124,6 +147,10 @@ class EvolutionSystem extends CoreSystem {
             }
         } else {
             this.hasShownEvolutionEvent = false;
+            // 隐藏按钮而不是删除，避免重复创建
+            if (this.evolveButton) {
+                this.evolveButton.style.display = 'none';
+            }
         }
     }
     
@@ -142,9 +169,17 @@ class EvolutionSystem extends CoreSystem {
             this.updateUI();
             this.updateRequirementsList();
             
+            // 通知进化路线系统更新
+            if (window.evolutionRouteSystem) {
+                window.evolutionRouteSystem.onEvolution();
+            }
+            
             if (this.evolutionLevel === 100) {
                 this.addKeyEvent("已达到最高进化等级！");
             }
+            
+            // 进化后重新检查按钮状态
+            this.checkEvolution();
         }
     }
     
