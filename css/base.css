@@ -82,6 +82,45 @@ html, body {
     transform: scale(0.95);
 }
 
+/* 主题按钮下拉菜单 - 桌面端 */
+.theme-toggle-dropdown {
+    position: absolute;
+    top: 45px;
+    right: 0;
+    background: var(--button-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1002;
+    display: none;
+    flex-direction: column;
+    min-width: 120px;
+    overflow: hidden;
+}
+
+.theme-toggle-dropdown.show {
+    display: flex;
+}
+
+.theme-toggle-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+    color: var(--text-color);
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+}
+
+.theme-toggle-dropdown-item:hover {
+    background-color: var(--button-hover);
+}
+
 /* 移动端主题按钮调整 */
 @media (max-width: 768px) {
     .theme-toggle {
@@ -94,7 +133,7 @@ html, body {
     
     /* 移动端长按提示 */
     .theme-toggle::after {
-        content: "长按显示存档菜单";
+        content: "长按显示菜单";
         position: absolute;
         top: 50px;
         right: 0;
@@ -112,5 +151,12 @@ html, body {
     
     .theme-toggle:hover::after {
         opacity: 1;
+    }
+    
+    /* 移动端下拉菜单位置调整 */
+    .theme-toggle-dropdown {
+        top: 50px;
+        right: 0;
+        min-width: 140px;
     }
 }

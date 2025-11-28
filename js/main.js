@@ -1,4 +1,10 @@
 // 主程序 - 初始化所有系统
+
+// 控制台解锁机制 - 全局变量
+let themeClickCount = 0;
+let themeClickTimer = null;
+let dropdownTimer = null; // 新增：下拉菜单显示计时器
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM加载完成，开始初始化系统");
     
@@ -393,10 +399,6 @@ function initPageAndConsole(evolutionSystem, stateSystem, eventSystem) {
     // 时间暂停状态
     let timePaused = false;
     
-    // 控制台解锁机制 - 10秒内点击主题切换按钮10次
-    let themeClickCount = 0;
-    let themeClickTimer = null;
-    
     // 当前选中的区域
     let currentArea = 'sea';
     
@@ -527,10 +529,91 @@ function initPageAndConsole(evolutionSystem, stateSystem, eventSystem) {
         });
     }
     
+    // 创建主题按钮下拉菜单
+    function createThemeToggleDropdown() {
+        // 检查是否已存在下拉菜单
+        if (document.querySelector('.theme-toggle-dropdown')) {
+            return;
+        }
+        
+        const dropdown = document.createElement('div');
+        dropdown.className = 'theme-toggle-dropdown';
+        dropdown.innerHTML = `
+            <button class="theme-toggle-dropdown-item" id="console-dropdown-item">
+                <span>🔧</span>
+                <span>控制台</span>
+            </button>
+        `;
+        
+        // 将下拉菜单添加到主题按钮后面
+        if (themeToggle && themeToggle.parentNode) {
+            themeToggle.parentNode.appendChild(dropdown);
+        }
+        
+        // 绑定控制台选项点击事件
+        const consoleItem = document.getElementById('console-dropdown-item');
+        if (consoleItem) {
+            consoleItem.addEventListener('click', function() {
+                if (consoleElement) {
+                    consoleElement.style.display = 'block';
+                    console.log("通过下拉菜单打开控制台");
+                    
+                    // 添加解锁提示
+                    if (window.evolutionSystem) {
+                        window.evolutionSystem.addKeyEvent("开发者控制台已解锁");
+                    }
+                }
+                
+                // 隐藏下拉菜单
+                hideThemeDropdown();
+            });
+        }
+        
+        // 点击页面其他位置隐藏下拉菜单
+        document.addEventListener('click', function(e) {
+            if (!themeToggle.contains(e.target) && !dropdown.contains(e.target)) {
+                hideThemeDropdown();
+            }
+        });
+        
+        console.log("主题按钮下拉菜单创建完成");
+    }
+    
+    // 显示主题下拉菜单
+    function showThemeDropdown() {
+        const dropdown = document.querySelector('.theme-toggle-dropdown');
+        if (dropdown) {
+            dropdown.classList.add('show');
+        }
+    }
+    
+    // 隐藏主题下拉菜单
+    function hideThemeDropdown() {
+        const dropdown = document.querySelector('.theme-toggle-dropdown');
+        if (dropdown) {
+            dropdown.classList.remove('show');
+        }
+    }
+    
+    // 切换主题下拉菜单显示状态
+    function toggleThemeDropdown() {
+        const dropdown = document.querySelector('.theme-toggle-dropdown');
+        if (dropdown) {
+            if (dropdown.classList.contains('show')) {
+                hideThemeDropdown();
+            } else {
+                showThemeDropdown();
+            }
+        }
+    }
+    
     // 初始化事件选择界面
     initEventSelection();
     
-    // 主题切换按钮事件监听 - 修复冲突问题
+    // 创建主题按钮下拉菜单
+    createThemeToggleDropdown();
+    
+    // 主题切换按钮事件监听 - 增强版
     if (themeToggle) {
         // 保存原始的事件处理器
         const originalOnClick = themeToggle.onclick;
@@ -539,58 +622,183 @@ function initPageAndConsole(evolutionSystem, stateSystem, eventSystem) {
         const newThemeToggle = themeToggle.cloneNode(true);
         themeToggle.parentNode.replaceChild(newThemeToggle, themeToggle);
         
-        // 重新添加事件监听器
-        newThemeToggle.addEventListener('click', function(e) {
-            console.log("主题切换按钮被点击");
-            
-            // 执行主题切换功能
-            const body = document.body;
-            if (body.classList.contains('light-theme')) {
-                body.classList.remove('light-theme');
-                body.classList.add('dark-theme');
-                newThemeToggle.textContent = '☀️';
-            } else {
-                body.classList.remove('dark-theme');
-                body.classList.add('light-theme');
-                newThemeToggle.textContent = '🌙';
+        // 桌面端：鼠标悬停显示下拉菜单
+        newThemeToggle.addEventListener('mouseenter', function() {
+            if (window.innerWidth > 768) { // 桌面端
+                showThemeDropdown();
             }
-            
-            // 控制台解锁计数逻辑
-            themeClickCount++;
-            
-            // 清除之前的计时器
-            if (themeClickTimer) {
-                clearTimeout(themeClickTimer);
-            }
-            
-            // 设置新的计时器，10秒后重置计数
-            themeClickTimer = setTimeout(function() {
-                themeClickCount = 0;
-                console.log("控制台解锁计数已重置");
-            }, 10000);
-            
-            // 检查是否达到解锁条件
-            if (themeClickCount >= 10) {
-                if (consoleElement) {
-                    consoleElement.style.display = 'block';
-                    console.log("控制台已解锁并显示");
+        });
+        
+        newThemeToggle.addEventListener('mouseleave', function() {
+            if (window.innerWidth > 768) { // 桌面端
+                // 延迟隐藏，避免无法点击菜单项
+                if (dropdownTimer) {
+                    clearTimeout(dropdownTimer);
                 }
-                themeClickCount = 0;
+                dropdownTimer = setTimeout(() => {
+                    hideThemeDropdown();
+                }, 300);
+            }
+        });
+        
+        // 移动端：长按显示下拉菜单
+        let longPressTimer = null;
+        let longPressTriggered = false;
+        
+        newThemeToggle.addEventListener('touchstart', function(e) {
+            if (window.innerWidth <= 768) { // 移动端
+                e.preventDefault();
+                longPressTriggered = false;
+                
+                longPressTimer = setTimeout(() => {
+                    longPressTriggered = true;
+                    toggleThemeDropdown();
+                    console.log("移动端长按触发，显示下拉菜单");
+                }, 800); // 800毫秒长按
+            }
+        });
+        
+        newThemeToggle.addEventListener('touchend', function(e) {
+            if (window.innerWidth <= 768) { // 移动端
+                e.preventDefault();
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                
+                // 如果不是长按，执行正常的主题切换和控制台解锁计数
+                if (!longPressTriggered) {
+                    // 执行主题切换功能
+                    const body = document.body;
+                    if (body.classList.contains('light-theme')) {
+                        body.classList.remove('light-theme');
+                        body.classList.add('dark-theme');
+                        newThemeToggle.textContent = '☀️';
+                    } else {
+                        body.classList.remove('dark-theme');
+                        body.classList.add('light-theme');
+                        newThemeToggle.textContent = '🌙';
+                    }
+                    
+                    // 控制台解锁计数逻辑
+                    themeClickCount++;
+                    
+                    // 清除之前的计时器
+                    if (themeClickTimer) {
+                        clearTimeout(themeClickTimer);
+                    }
+                    
+                    // 设置新的计时器，10秒后重置计数
+                    themeClickTimer = setTimeout(function() {
+                        console.log("控制台解锁计数已重置");
+                        themeClickCount = 0;
+                    }, 10000);
+                    
+                    // 检查是否达到解锁条件
+                    if (themeClickCount >= 10) {
+                        if (consoleElement) {
+                            consoleElement.style.display = 'block';
+                            console.log("控制台已解锁并显示");
+                            
+                            // 重置计数，但不清除计时器，允许继续计数
+                            themeClickCount = 0;
+                            
+                            // 设置新的计时器，防止立即重复触发
+                            if (themeClickTimer) {
+                                clearTimeout(themeClickTimer);
+                            }
+                            themeClickTimer = setTimeout(function() {
+                                console.log("控制台解锁保护期结束");
+                                themeClickCount = 0;
+                            }, 2000); // 2秒保护期，防止误触
+                        }
+                        
+                        // 添加解锁提示
+                        if (window.evolutionSystem) {
+                            window.evolutionSystem.addKeyEvent("开发者控制台已解锁");
+                        }
+                    }
+                    
+                    console.log(`主题按钮点击次数: ${themeClickCount}`);
+                }
+                
+                longPressTriggered = false;
+            }
+        });
+        
+        newThemeToggle.addEventListener('touchmove', function(e) {
+            if (window.innerWidth <= 768) { // 移动端
+                e.preventDefault();
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                    longPressTriggered = false;
+                }
+            }
+        });
+        
+        // 桌面端：点击切换主题
+        newThemeToggle.addEventListener('click', function(e) {
+            if (window.innerWidth > 768) { // 桌面端
+                e.preventDefault();
+                
+                // 执行主题切换功能
+                const body = document.body;
+                if (body.classList.contains('light-theme')) {
+                    body.classList.remove('light-theme');
+                    body.classList.add('dark-theme');
+                    newThemeToggle.textContent = '☀️';
+                } else {
+                    body.classList.remove('dark-theme');
+                    body.classList.add('light-theme');
+                    newThemeToggle.textContent = '🌙';
+                }
+                
+                // 控制台解锁计数逻辑
+                themeClickCount++;
+                
+                // 清除之前的计时器
                 if (themeClickTimer) {
                     clearTimeout(themeClickTimer);
                 }
                 
-                // 添加解锁提示
-                if (window.evolutionSystem) {
-                    window.evolutionSystem.addKeyEvent("开发者控制台已解锁");
+                // 设置新的计时器，10秒后重置计数
+                themeClickTimer = setTimeout(function() {
+                    console.log("控制台解锁计数已重置");
+                    themeClickCount = 0;
+                }, 10000);
+                
+                // 检查是否达到解锁条件
+                if (themeClickCount >= 10) {
+                    if (consoleElement) {
+                        consoleElement.style.display = 'block';
+                        console.log("控制台已解锁并显示");
+                        
+                        // 重置计数
+                        themeClickCount = 0;
+                        
+                        // 设置新的计时器，防止立即重复触发
+                        if (themeClickTimer) {
+                            clearTimeout(themeClickTimer);
+                        }
+                        themeClickTimer = setTimeout(function() {
+                            console.log("控制台解锁保护期结束");
+                            themeClickCount = 0;
+                        }, 2000);
+                    }
+                    
+                    // 添加解锁提示
+                    if (window.evolutionSystem) {
+                        window.evolutionSystem.addKeyEvent("开发者控制台已解锁");
+                    }
                 }
-            }
-            
-            console.log(`主题按钮点击次数: ${themeClickCount}`);
-            
-            // 执行原始的事件处理器（如果有）
-            if (originalOnClick) {
-                originalOnClick.call(this, e);
+                
+                console.log(`主题按钮点击次数: ${themeClickCount}`);
+                
+                // 执行原始的事件处理器（如果有）
+                if (originalOnClick) {
+                    originalOnClick.call(this, e);
+                }
             }
         });
         
@@ -622,6 +830,7 @@ function initPageAndConsole(evolutionSystem, stateSystem, eventSystem) {
         closeConsoleBtn.addEventListener('click', function() {
             if (consoleElement) {
                 consoleElement.style.display = 'none';
+                console.log("控制台已关闭");
             }
         });
     }

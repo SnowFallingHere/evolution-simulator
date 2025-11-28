@@ -31,25 +31,24 @@ class SaveManager extends CoreSystem {
         this.startAutoSave();
     }
     
-    // 检查设备类型
+    // 检查设备类型 - 修复响应式检测
     checkDeviceType() {
+        const wasMobile = this.isMobile;
         this.isMobile = window.innerWidth <= 768;
-        console.log(`设备类型: ${this.isMobile ? '移动端' : '桌面端'}`);
         
-        // 监听窗口大小变化
-        window.addEventListener('resize', () => {
-            const wasMobile = this.isMobile;
-            this.isMobile = window.innerWidth <= 768;
-            
-            if (wasMobile !== this.isMobile) {
-                console.log(`设备类型变化: ${this.isMobile ? '移动端' : '桌面端'}`);
-                this.recreateButtons();
-            }
-        });
+        console.log(`设备类型检测: ${this.isMobile ? '移动端' : '桌面端'}, 窗口宽度: ${window.innerWidth}px`);
+        
+        // 如果设备类型发生变化，重新创建按钮
+        if (wasMobile !== this.isMobile) {
+            console.log(`设备类型变化: ${wasMobile ? '移动端' : '桌面端'} -> ${this.isMobile ? '移动端' : '桌面端'}`);
+            this.recreateButtons();
+        }
     }
     
     // 重新创建按钮（设备类型变化时）
     recreateButtons() {
+        console.log("重新创建存档按钮");
+        
         // 移除现有按钮
         const existingContainer = document.querySelector('.save-buttons-container');
         const existingMobileMenu = document.querySelector('.save-mobile-menu');
@@ -217,6 +216,11 @@ class SaveManager extends CoreSystem {
         } else {
             this.setupDesktopEventListeners();
         }
+        
+        // 添加窗口大小变化监听器 - 修复响应式检测
+        window.addEventListener('resize', () => {
+            this.checkDeviceType();
+        });
     }
     
     // 设置桌面端事件监听
@@ -270,7 +274,7 @@ class SaveManager extends CoreSystem {
         });
     }
     
-    // 设置移动端事件监听
+    // 设置移动端事件监听 - 修复与新的控制台下拉菜单的冲突
     setupMobileEventListeners() {
         const themeToggle = document.getElementById('theme-toggle');
         const mobileMenu = document.querySelector('.save-mobile-menu');
@@ -282,42 +286,44 @@ class SaveManager extends CoreSystem {
             return;
         }
         
-        // 修复移动端主题切换按钮问题 - 不再干扰控制台解锁功能
+        console.log("设置移动端事件监听器");
+        
+        // 修复移动端主题切换按钮问题 - 不干扰控制台解锁功能
         this.setupMobileThemeToggle(themeToggle);
         
-        // 长按主题切换按钮显示菜单
-        themeToggle.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            this.longPressTriggered = false;
-            
-            this.longPressTimer = setTimeout(() => {
-                this.longPressTriggered = true;
-                this.showMobileMenu();
-            }, 800); // 800毫秒长按
-        });
+        // 双击主题切换按钮显示存档菜单（避免与控制台下拉菜单冲突）
+        let lastTapTime = 0;
+        let tapCount = 0;
         
         themeToggle.addEventListener('touchend', (e) => {
             e.preventDefault();
-            if (this.longPressTimer) {
-                clearTimeout(this.longPressTimer);
-                this.longPressTimer = null;
+            const currentTime = new Date().getTime();
+            const timeDiff = currentTime - lastTapTime;
+            
+            // 如果是双击（500ms内连续点击两次）
+            if (timeDiff < 500 && tapCount === 1) {
+                tapCount = 0;
+                this.showMobileMenu();
+                console.log("移动端双击触发，显示存档菜单");
+                
+                // 阻止事件继续传播，避免触发控制台下拉菜单
+                e.stopImmediatePropagation();
+                return;
             }
             
-            // 如果不是长按，执行正常的主题切换
-            if (!this.longPressTriggered) {
+            tapCount++;
+            lastTapTime = currentTime;
+            
+            // 重置计数
+            setTimeout(() => {
+                tapCount = 0;
+            }, 500);
+            
+            // 如果不是双击，执行正常的主题切换
+            if (tapCount === 1) {
                 // 手动触发主题切换，但不干扰控制台解锁计数
                 this.toggleThemeOnly();
-            }
-            
-            this.longPressTriggered = false;
-        });
-        
-        themeToggle.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (this.longPressTimer) {
-                clearTimeout(this.longPressTimer);
-                this.longPressTimer = null;
-                this.longPressTriggered = false;
+                console.log("移动端点击触发主题切换");
             }
         });
         
@@ -363,6 +369,8 @@ class SaveManager extends CoreSystem {
     
     // 修复移动端主题切换按钮问题 - 不干扰控制台解锁功能
     setupMobileThemeToggle(themeToggle) {
+        console.log("设置移动端主题切换按钮");
+        
         // 移除原有的click事件监听器，防止冲突
         const newToggle = themeToggle.cloneNode(true);
         themeToggle.parentNode.replaceChild(newToggle, themeToggle);
@@ -372,10 +380,66 @@ class SaveManager extends CoreSystem {
             e.preventDefault();
             // 只执行主题切换，不处理控制台解锁
             this.toggleThemeOnly();
+            console.log("移动端主题按钮点击（仅切换主题）");
         });
         
         // 更新全局引用
         window.themeToggle = newToggle;
+        
+        // 确保移动端也能触发控制台解锁
+        this.setupMobileConsoleUnlock(newToggle);
+    }
+    
+    // 设置移动端控制台解锁功能
+    setupMobileConsoleUnlock(themeToggle) {
+        let mobileClickCount = 0;
+        let mobileClickTimer = null;
+        
+        // 添加触摸事件监听器，用于控制台解锁计数
+        themeToggle.addEventListener('touchend', (e) => {
+            // 只在移动端且不是双击时计数
+            if (this.isMobile) {
+                mobileClickCount++;
+                console.log(`移动端控制台解锁计数: ${mobileClickCount}`);
+                
+                // 清除之前的计时器
+                if (mobileClickTimer) {
+                    clearTimeout(mobileClickTimer);
+                }
+                
+                // 设置新的计时器，10秒后重置计数
+                mobileClickTimer = setTimeout(() => {
+                    mobileClickCount = 0;
+                    console.log("移动端控制台解锁计数已重置");
+                }, 10000);
+                
+                // 检查是否达到解锁条件
+                if (mobileClickCount >= 10) {
+                    const consoleElement = document.getElementById('de_console');
+                    if (consoleElement) {
+                        consoleElement.style.display = 'block';
+                        console.log("移动端控制台已解锁并显示");
+                        
+                        // 重置计数
+                        mobileClickCount = 0;
+                        
+                        // 设置保护期
+                        if (mobileClickTimer) {
+                            clearTimeout(mobileClickTimer);
+                        }
+                        mobileClickTimer = setTimeout(() => {
+                            console.log("移动端控制台解锁保护期结束");
+                            mobileClickCount = 0;
+                        }, 2000);
+                    }
+                    
+                    // 添加解锁提示
+                    if (window.evolutionSystem) {
+                        window.evolutionSystem.addKeyEvent("开发者控制台已解锁");
+                    }
+                }
+            }
+        });
     }
     
     // 仅切换主题，不干扰控制台解锁计数
@@ -410,6 +474,8 @@ class SaveManager extends CoreSystem {
                 mobileMenu.style.opacity = '1';
                 mobileMenu.style.transform = 'translateY(0)';
             }, 10);
+            
+            console.log("移动端存档菜单已显示");
         }
     }
     
@@ -425,6 +491,8 @@ class SaveManager extends CoreSystem {
                 mobileMenu.style.display = 'none';
                 this.menuVisible = false;
             }, 200);
+            
+            console.log("移动端存档菜单已隐藏");
         }
     }
     
@@ -758,7 +826,7 @@ style.textContent = `
     /* 移动端主题按钮长按提示 */
     @media (max-width: 768px) {
         .theme-toggle::after {
-            content: "长按显示存档菜单";
+            content: "双击显示存档菜单";
             position: absolute;
             top: 50px;
             right: 0;
