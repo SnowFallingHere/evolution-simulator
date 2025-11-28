@@ -8,6 +8,9 @@ class EvolutionRouteSystem extends CoreSystem {
         this.gameStarted = false;
         this.hasThought = false; // 记录是否进行过思考
         
+        // 确保全局可用
+        window.evolutionRouteSystem = this;
+        
         this.init();
     }
     
