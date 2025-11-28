@@ -12,6 +12,7 @@ class SaveManager extends CoreSystem {
         this.isMobile = false;
         this.menuVisible = false;
         this.longPressTimer = null;
+        this.longPressTriggered = false;
         
         // 初始化
         this.init();
@@ -145,8 +146,8 @@ class SaveManager extends CoreSystem {
         mobileMenu.className = 'save-mobile-menu';
         mobileMenu.style.cssText = `
             position: fixed;
-            top: 60px;
-            right: 10px;
+            top: 70px;
+            right: 15px;
             background: var(--button-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
@@ -281,12 +282,18 @@ class SaveManager extends CoreSystem {
             return;
         }
         
+        // 修复移动端主题切换按钮问题 - 不再干扰控制台解锁功能
+        this.setupMobileThemeToggle(themeToggle);
+        
         // 长按主题切换按钮显示菜单
         themeToggle.addEventListener('touchstart', (e) => {
             e.preventDefault();
+            this.longPressTriggered = false;
+            
             this.longPressTimer = setTimeout(() => {
+                this.longPressTriggered = true;
                 this.showMobileMenu();
-            }, 800); // 800毫司长按
+            }, 800); // 800毫秒长按
         });
         
         themeToggle.addEventListener('touchend', (e) => {
@@ -295,6 +302,14 @@ class SaveManager extends CoreSystem {
                 clearTimeout(this.longPressTimer);
                 this.longPressTimer = null;
             }
+            
+            // 如果不是长按，执行正常的主题切换
+            if (!this.longPressTriggered) {
+                // 手动触发主题切换，但不干扰控制台解锁计数
+                this.toggleThemeOnly();
+            }
+            
+            this.longPressTriggered = false;
         });
         
         themeToggle.addEventListener('touchmove', (e) => {
@@ -302,6 +317,7 @@ class SaveManager extends CoreSystem {
             if (this.longPressTimer) {
                 clearTimeout(this.longPressTimer);
                 this.longPressTimer = null;
+                this.longPressTriggered = false;
             }
         });
         
@@ -345,26 +361,50 @@ class SaveManager extends CoreSystem {
         console.log("移动端存档菜单事件监听设置完成");
     }
     
+    // 修复移动端主题切换按钮问题 - 不干扰控制台解锁功能
+    setupMobileThemeToggle(themeToggle) {
+        // 移除原有的click事件监听器，防止冲突
+        const newToggle = themeToggle.cloneNode(true);
+        themeToggle.parentNode.replaceChild(newToggle, themeToggle);
+        
+        // 重新添加主题切换功能，但不覆盖控制台解锁功能
+        newToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            // 只执行主题切换，不处理控制台解锁
+            this.toggleThemeOnly();
+        });
+        
+        // 更新全局引用
+        window.themeToggle = newToggle;
+    }
+    
+    // 仅切换主题，不干扰控制台解锁计数
+    toggleThemeOnly() {
+        const body = document.body;
+        if (body.classList.contains('light-theme')) {
+            body.classList.remove('light-theme');
+            body.classList.add('dark-theme');
+            window.themeToggle.textContent = '☀️';
+        } else {
+            body.classList.remove('dark-theme');
+            body.classList.add('light-theme');
+            window.themeToggle.textContent = '🌙';
+        }
+        
+        console.log("主题已切换（仅主题）");
+    }
+    
     // 显示移动端菜单
     showMobileMenu() {
         const mobileMenu = document.querySelector('.save-mobile-menu');
-        const themeToggle = document.getElementById('theme-toggle');
-    
-        if (mobileMenu && themeToggle) {
-            // 获取主题按钮的位置
-            const themeRect = themeToggle.getBoundingClientRect();
-        
-            // 设置菜单位置在主题按钮下方
-            mobileMenu.style.top = `${themeRect.bottom + 5}px`;
-            mobileMenu.style.right = `${window.innerWidth - themeRect.right}px`;
-        
+        if (mobileMenu) {
             mobileMenu.style.display = 'flex';
             this.menuVisible = true;
-        
-        // 添加显示动画
+            
+            // 添加显示动画
             mobileMenu.style.opacity = '0';
             mobileMenu.style.transform = 'translateY(-10px)';
-        
+            
             setTimeout(() => {
                 mobileMenu.style.transition = 'all 0.3s ease';
                 mobileMenu.style.opacity = '1';
@@ -394,6 +434,9 @@ class SaveManager extends CoreSystem {
             // 清除所有缓存数据
             this.clearAllStorage();
             
+            // 添加重置冷却时间的标记
+            localStorage.setItem("reset_cooldowns", "true");
+            
             // 重新加载页面
             location.reload();
         }
@@ -410,6 +453,9 @@ class SaveManager extends CoreSystem {
             
             // 清除主存档
             localStorage.removeItem(this.STORAGE_KEY);
+            
+            // 清除重置标记（如果有）
+            localStorage.removeItem("reset_cooldowns");
             
             console.log("所有存档数据已清除");
             
@@ -679,8 +725,8 @@ style.textContent = `
     /* 移动端存档菜单样式 */
     .save-mobile-menu {
         position: fixed;
-        top: 60px;
-        right: 10px;
+        top: 70px;
+        right: 15px;
         background: var(--button-bg);
         border: 1px solid var(--border-color);
         border-radius: 8px;
@@ -714,17 +760,18 @@ style.textContent = `
         .theme-toggle::after {
             content: "长按显示存档菜单";
             position: absolute;
-            top: 45px;
+            top: 50px;
             right: 0;
             background: rgba(0,0,0,0.8);
             color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 10px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
             white-space: nowrap;
             opacity: 0;
             transition: opacity 0.3s;
             pointer-events: none;
+            z-index: 1002;
         }
         
         .theme-toggle:hover::after {

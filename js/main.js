@@ -530,19 +530,29 @@ function initPageAndConsole(evolutionSystem, stateSystem, eventSystem) {
     // 初始化事件选择界面
     initEventSelection();
     
-    // 主题切换按钮事件监听 - 添加控制台解锁功能
+    // 主题切换按钮事件监听 - 修复冲突问题
     if (themeToggle) {
-        themeToggle.addEventListener('click', function(e) {
+        // 保存原始的事件处理器
+        const originalOnClick = themeToggle.onclick;
+        
+        // 移除所有现有的事件监听器
+        const newThemeToggle = themeToggle.cloneNode(true);
+        themeToggle.parentNode.replaceChild(newThemeToggle, themeToggle);
+        
+        // 重新添加事件监听器
+        newThemeToggle.addEventListener('click', function(e) {
+            console.log("主题切换按钮被点击");
+            
             // 执行主题切换功能
             const body = document.body;
             if (body.classList.contains('light-theme')) {
                 body.classList.remove('light-theme');
                 body.classList.add('dark-theme');
-                themeToggle.textContent = '☀️';
+                newThemeToggle.textContent = '☀️';
             } else {
                 body.classList.remove('dark-theme');
                 body.classList.add('light-theme');
-                themeToggle.textContent = '🌙';
+                newThemeToggle.textContent = '🌙';
             }
             
             // 控制台解锁计数逻辑
@@ -563,6 +573,7 @@ function initPageAndConsole(evolutionSystem, stateSystem, eventSystem) {
             if (themeClickCount >= 10) {
                 if (consoleElement) {
                     consoleElement.style.display = 'block';
+                    console.log("控制台已解锁并显示");
                 }
                 themeClickCount = 0;
                 if (themeClickTimer) {
@@ -573,12 +584,18 @@ function initPageAndConsole(evolutionSystem, stateSystem, eventSystem) {
                 if (window.evolutionSystem) {
                     window.evolutionSystem.addKeyEvent("开发者控制台已解锁");
                 }
-                
-                console.log("控制台已解锁");
             }
             
             console.log(`主题按钮点击次数: ${themeClickCount}`);
+            
+            // 执行原始的事件处理器（如果有）
+            if (originalOnClick) {
+                originalOnClick.call(this, e);
+            }
         });
+        
+        // 更新全局引用
+        window.themeToggle = newThemeToggle;
     }
     
     // 页面切换按钮事件监听
