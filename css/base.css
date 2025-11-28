@@ -52,7 +52,7 @@ html, body {
     -webkit-overflow-scrolling: touch; /* 启用iOS弹性滚动 */
 }
 
-/* 主题切换按钮 */
+/* 主题切换按钮 - 修复位置 */
 .theme-toggle {
     position: fixed;
     top: 10px;
@@ -80,4 +80,37 @@ html, body {
 
 .theme-toggle:active {
     transform: scale(0.95);
+}
+
+/* 移动端主题按钮调整 */
+@media (max-width: 768px) {
+    .theme-toggle {
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+        top: 15px;
+        right: 15px;
+    }
+    
+    /* 移动端长按提示 */
+    .theme-toggle::after {
+        content: "长按显示存档菜单";
+        position: absolute;
+        top: 50px;
+        right: 0;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+        z-index: 1002;
+    }
+    
+    .theme-toggle:hover::after {
+        opacity: 1;
+    }
 }
