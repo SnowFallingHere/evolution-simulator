@@ -2,100 +2,174 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM加载完成，开始初始化系统");
     
-    // 创建加载界面
-    createLoadingScreen();
+    // 创建增强的加载界面
+    createEnhancedLoadingScreen();
     
-    try {
-        // 首先隐藏所有页面，防止显示错误页面
-        const pages = document.querySelectorAll('.page');
-        pages.forEach(page => {
-            page.style.display = 'none';
-        });
-        
-        // 检查是否有缓存数据
-        const hasCache = checkForCache();
-        
-        if (hasCache) {
-            console.log("检测到缓存数据，直接加载游戏");
-            loadGameDirectly();
-        } else {
-            console.log("未检测到缓存数据，显示开始界面");
-            // 初始化事件系统
-            const eventSystem = new EventSystem();
-            window.eventSystem = eventSystem;
+    // 延迟初始化，确保DOM完全加载
+    setTimeout(() => {
+        try {
+            // 首先隐藏所有页面，防止显示错误页面
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => {
+                page.style.display = 'none';
+            });
             
-            // 初始化状态系统
-            const stateSystem = new StateSystem(eventSystem);
-            window.stateSystem = stateSystem;
+            // 检查是否有缓存数据
+            const hasCache = checkForCache();
             
-            // 初始化活动系统
-            const activitySystem = new ActivitySystem(stateSystem, eventSystem);
-            window.activitySystem = activitySystem;
+            if (hasCache) {
+                console.log("检测到缓存数据，直接加载游戏");
+                loadGameDirectly();
+            } else {
+                console.log("未检测到缓存数据，显示开始界面");
+                // 初始化事件系统
+                const eventSystem = new EventSystem();
+                window.eventSystem = eventSystem;
+                
+                // 初始化状态系统
+                const stateSystem = new StateSystem(eventSystem);
+                window.stateSystem = stateSystem;
+                
+                // 初始化活动系统
+                const activitySystem = new ActivitySystem(stateSystem, eventSystem);
+                window.activitySystem = activitySystem;
+                
+                // 初始化进化系统
+                const evolutionSystem = new EvolutionSystem(stateSystem, eventSystem);
+                window.evolutionSystem = evolutionSystem;
+                
+                // 初始化进化路线系统
+                const evolutionRouteSystem = new EvolutionRouteSystem(stateSystem, eventSystem, evolutionSystem);
+                window.evolutionRouteSystem = evolutionRouteSystem;
+                
+                // 设置活动按钮事件监听器
+                setupActivityListeners(activitySystem);
+                
+                // 初始化页面切换和控制台
+                initPageAndConsole(evolutionSystem, stateSystem, eventSystem);
+                
+                console.log("所有系统初始化完成");
+                
+                // 显示开始页面
+                showPage('start');
+            }
             
-            // 初始化进化系统
-            const evolutionSystem = new EvolutionSystem(stateSystem, eventSystem);
-            window.evolutionSystem = evolutionSystem;
-            
-            // 初始化进化路线系统
-            const evolutionRouteSystem = new EvolutionRouteSystem(stateSystem, eventSystem, evolutionSystem);
-            window.evolutionRouteSystem = evolutionRouteSystem;
-            
-            // 设置活动按钮事件监听器
-            setupActivityListeners(activitySystem);
-            
-            // 初始化页面切换和控制台
-            initPageAndConsole(evolutionSystem, stateSystem, eventSystem);
-            
-            console.log("所有系统初始化完成");
-            
-            // 显示开始页面
+        } catch (error) {
+            console.error("初始化过程中出现错误:", error);
+            // 如果出现错误，显示开始页面
             showPage('start');
+        } finally {
+            // 隐藏加载界面
+            hideLoadingScreen();
         }
-        
-    } catch (error) {
-        console.error("初始化过程中出现错误:", error);
-        // 如果出现错误，显示开始页面
-        showPage('start');
-    } finally {
-        // 隐藏加载界面
-        hideLoadingScreen();
-    }
+    }, 500); // 增加延迟确保DOM完全加载
 });
 
-// 创建加载界面
-function createLoadingScreen() {
+// 创建增强的加载界面
+function createEnhancedLoadingScreen() {
     const loadingScreen = document.createElement('div');
     loadingScreen.id = 'loading-screen';
+    loadingScreen.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--bg-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    
     loadingScreen.innerHTML = `
-        <div class="loading-container">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">加载中...</div>
+        <div class="loading-container" style="text-align: center; margin-bottom: 100px;">
+            <div class="loading-spinner" style="
+                width: 60px;
+                height: 60px;
+                border: 6px solid var(--border-color);
+                border-top: 6px solid var(--progress-fill);
+                border-radius: 50%;
+                animation: spin 1.5s linear infinite;
+                margin: 0 auto 30px;
+            "></div>
+            <div class="loading-text" style="
+                color: var(--text-color);
+                font-size: 18px;
+                margin-bottom: 10px;
+            ">正在初始化系统</div>
+        </div>
+        <div class="loading-footer" style="
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            color: var(--text-color);
+            font-size: 14px;
+            opacity: 0.8;
+        ">
+            <span id="loading-dots">正在加载模拟器系统中...</span>
         </div>
     `;
     
-    // 确保样式已经加载
-    document.head.appendChild(loadingScreen);
-    
-    // 添加一些调试信息
-    console.log("创建加载界面");
-    
-    // 测试样式是否生效
-    setTimeout(() => {
-        const spinner = document.querySelector('.loading-spinner');
-        if (spinner) {
-            console.log("加载圆环元素存在:", spinner);
-            console.log("加载圆环样式:", window.getComputedStyle(spinner));
-        } else {
-            console.error("加载圆环元素未找到");
+    // 添加动画关键帧
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-    }, 100);
+        
+        /* 确保加载界面覆盖所有内容 */
+        #loading-screen {
+            background-color: var(--bg-color) !important;
+        }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(loadingScreen);
+    
+    // 启动动态点动画
+    startLoadingDotsAnimation();
+    
+    console.log("增强加载界面创建完成");
+}
+
+// 启动加载点动画
+function startLoadingDotsAnimation() {
+    const dotsElement = document.getElementById('loading-dots');
+    if (!dotsElement) return;
+    
+    let dotCount = 0;
+    const maxDots = 3;
+    const baseText = "正在加载模拟器系统中";
+    
+    const dotsInterval = setInterval(() => {
+        dotCount = (dotCount + 1) % (maxDots + 1);
+        const dots = '.'.repeat(dotCount);
+        dotsElement.textContent = baseText + dots;
+    }, 500);
+    
+    // 保存interval以便清理
+    window.loadingDotsInterval = dotsInterval;
 }
 
 // 隐藏加载界面
 function hideLoadingScreen() {
     const loadingScreen = document.getElementById('loading-screen');
     if (loadingScreen) {
-        loadingScreen.style.display = 'none';
+        // 先停止点动画
+        if (window.loadingDotsInterval) {
+            clearInterval(window.loadingDotsInterval);
+        }
+        
+        // 添加淡出动画
+        loadingScreen.style.transition = 'opacity 0.5s ease';
+        loadingScreen.style.opacity = '0';
+        
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+        }, 500);
     }
 }
 
@@ -129,6 +203,9 @@ function checkForCache() {
 
 // 直接加载游戏（有缓存时）
 function loadGameDirectly() {
+    // 更新加载文字
+    updateLoadingText("正在恢复游戏进度...");
+    
     // 初始化事件系统
     const eventSystem = new EventSystem();
     window.eventSystem = eventSystem;
@@ -136,6 +213,9 @@ function loadGameDirectly() {
     // 初始化状态系统（会自动加载缓存）
     const stateSystem = new StateSystem(eventSystem);
     window.stateSystem = stateSystem;
+    
+    // 重置冷却时间 - 修复新存档冷却问题
+    resetAllCooldowns();
     
     // 初始化活动系统
     const activitySystem = new ActivitySystem(stateSystem, eventSystem);
@@ -171,6 +251,48 @@ function loadGameDirectly() {
     }
     
     console.log("游戏从缓存直接加载完成");
+}
+
+// 重置所有冷却时间
+function resetAllCooldowns() {
+    if (!window.stateSystem) return;
+    
+    // 重置所有活动冷却时间
+    const activities = ['hunt', 'rest', 'dormancy', 'explore', 'exercise', 'think', 'interact', 'tool', 'social'];
+    activities.forEach(activity => {
+        window.stateSystem.cooldowns[activity] = 0;
+    });
+    
+    // 重置全局冷却
+    window.stateSystem.globalCooldown = 0;
+    
+    // 重置活动状态
+    window.stateSystem.activityState = 'idle';
+    
+    console.log("所有冷却时间已重置");
+}
+
+// 更新加载文字
+function updateLoadingText(text) {
+    const dotsElement = document.getElementById('loading-dots');
+    if (dotsElement) {
+        const baseText = text;
+        dotsElement.textContent = baseText;
+        
+        // 重新启动点动画
+        if (window.loadingDotsInterval) {
+            clearInterval(window.loadingDotsInterval);
+        }
+        
+        let dotCount = 0;
+        const maxDots = 3;
+        
+        window.loadingDotsInterval = setInterval(() => {
+            dotCount = (dotCount + 1) % (maxDots + 1);
+            const dots = '.'.repeat(dotCount);
+            dotsElement.textContent = baseText + dots;
+        }, 500);
+    }
 }
 
 // 设置活动按钮事件监听器

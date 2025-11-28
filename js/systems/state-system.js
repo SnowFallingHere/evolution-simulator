@@ -228,10 +228,47 @@ class StateSystem extends CoreSystem {
     }
     
     init() {
+        // 检查是否需要重置冷却时间（新存档时）
+        this.checkAndResetCooldowns();
+        
         this.startStateChanges();
         this.startHungerCheck();
         this.startGameTime();
         this.updateUI();
+        this.setButtonStates();
+    }
+    
+    // 检查并重置冷却时间（新存档时）
+    checkAndResetCooldowns() {
+        try {
+            const resetFlag = localStorage.getItem("reset_cooldowns");
+            if (resetFlag === "true") {
+                console.log("检测到新存档标记，重置所有冷却时间");
+                this.resetAllCooldowns();
+                localStorage.removeItem("reset_cooldowns");
+            }
+        } catch (error) {
+            console.error("检查重置冷却时间标记失败:", error);
+        }
+    }
+    
+    // 重置所有冷却时间
+    resetAllCooldowns() {
+        // 重置所有活动冷却时间
+        const activities = ['hunt', 'rest', 'dormancy', 'explore', 'exercise', 'think', 'interact', 'tool', 'social'];
+        activities.forEach(activity => {
+            this.cooldowns[activity] = 0;
+        });
+        
+        // 重置全局冷却
+        this.globalCooldown = 0;
+        
+        // 重置活动状态
+        this.activityState = 'idle';
+        
+        console.log("新存档：所有冷却时间已重置");
+        
+        // 更新按钮状态
         this.setButtonStates();
     }
     
