@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>进化模拟器</title>
-        <!-- 在 index.html 的 head 部分替换原有的 style.css 引入 -->
+    <!-- CSS文件引入 -->
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css">
@@ -13,10 +13,10 @@
     <link rel="stylesheet" href="css/pages.css">
     <style>
         /* 临时样式，确保开始页面可见 */
-        。start-page {
+        .start-page {
             display: flex !important;
         }
-        。page {
+        .page {
             display: none;
         }
     </style>
@@ -30,7 +30,7 @@
     <!-- 死亡页面 - 初始隐藏 -->
     <div id="death" class="page death-page">
         <div class="death-message">你失败了</div>
-        <button onclick="window.evolutionRouteSystem.showPage('start')" style="margin-top: 20px; padding: 10px 20px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">返回开始</button>
+        <button onclick="showPage('start')" style="margin-top: 20px; padding: 10px 20px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">返回开始</button>
     </div>
 
     <!-- 进行中页面 - 初始隐藏 -->
@@ -190,7 +190,7 @@
     <div id="theEnd" class="page end-page">
         <div class="end-overlay"></div>
         <div class="end-message">你进化到了终点</div>
-        <button onclick="window.evolutionRouteSystem.showPage('start')" style="margin-top: 20px; padding: 10px 20px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">返回开始</button>
+        <button onclick="showPage('start')" style="margin-top: 20px; padding: 10px 20px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">返回开始</button>
     </div>
 
     <!-- 开发者控制台 - 初始隐藏 -->
@@ -271,23 +271,23 @@
                 <h3>状态控制</h3>
                 <h4>饥饿值</h4>
                 <div class="attribute-control">
-                    <input 输入="number" id="set-hunger-input" placeholder="饥饿值" min="0" max="100">
+                    <input type="number" id="set-hunger-input" placeholder="饥饿值" min="0" max="100">
                     <button id="set-hunger" class="console-btn">设定</button>
                 </div>
                 <h4>疾病值</h4>
                 <div class="attribute-control">
-                    <input 输入="number" id="set-disease-input" placeholder="疾病值" min="0" max="100">
+                    <input type="number" id="set-disease-input" placeholder="疾病值" min="0" max="100">
                     <button id="set-disease" class="console-btn">设定</button>
                 </div>
                 <h4>心理健康值</h4>
                 <div class="attribute-control">
-                    <input 输入="number" id="set-mental-health-input" placeholder="心理健康值" min="0" max="100">
+                    <input type="number" id="set-mental-health-input" placeholder="心理健康值" min="0" max="100">
                     <button id="set-mental-health" class="console-btn">设定</button>
                 </div>
                 <!-- 新增食物储存控制 -->
                 <h4>食物储存</h4>
                 <div class="attribute-control">
-                    <input 输入="number" id="set-food-storage-input" placeholder="食物储存数量" min="0">
+                    <input type="number" id="set-food-storage-input" placeholder="食物储存数量" min="0">
                     <button id="set-food-storage" class="console-btn">设定</button>
                 </div>
             </div>
@@ -317,4 +317,3 @@
     <script src="js/main.js"></script>
 </body>
 </html>
-
