@@ -1,0 +1,83 @@
+/* CSS变量 - 主题系统 */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #333333;
+  --panel-bg: #f5f5f5;
+  --border-color: #cccccc;
+  --header-bg: #e0e0e0;
+  --progress-bg: #e0e0e0;
+  --progress-fill: #000000;
+  --button-bg: #f0f0f0;
+  --button-hover: #e0e0e0;
+  --console-bg: #f9f9f9;
+  --console-header: #e0e0e0;
+  --death-bg: #000000;
+  --death-text: #ffffff;
+  --end-overlay: rgba(255, 255, 255, 0.9);
+  --end-text: #000000;
+}
+
+.dark-theme {
+  --bg-color: #1a1a1a;
+  --text-color: #e0e0e0;
+  --panel-bg: #2d2d2d;
+  --border-color: #444444;
+  --header-bg: #333333;
+  --progress-bg: #444444;
+  --progress-fill: #4CAF50;
+  --button-bg: #3d3d3d;
+  --button-hover: #4d4d4d;
+  --console-bg: #2d2d2d;
+  --console-header: #333333;
+  --death-bg: #000000;
+  --death-text: #ffffff;
+  --end-overlay: rgba(0, 0, 0, 0.8);
+  --end-text: #ffffff;
+}
+
+/* 重置默认样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    font-family: Arial, sans-serif;
+    height: 100%;
+    overflow: auto;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+    -webkit-overflow-scrolling: touch; /* 启用iOS弹性滚动 */
+}
+
+/* 主题切换按钮 */
+.theme-toggle {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 18px;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle:hover {
+    background-color: var(--button-hover);
+    transform: scale(1.1);
+}
+
+.theme-toggle:active {
+    transform: scale(0.95);
+}

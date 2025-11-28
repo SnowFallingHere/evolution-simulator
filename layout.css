@@ -1,0 +1,216 @@
+/* 页面容器 */
+.page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100%;
+    display: none;
+    overflow: auto;
+}
+
+/* 死亡页面 */
+.death-page {
+    background-color: var(--death-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    position: fixed;
+    height: 100%;
+    flex-direction: column;
+}
+
+.death-message {
+    color: var(--death-text);
+    font-size: 60px;
+    font-weight: bold;
+}
+
+/* 进行中页面 */
+.ongoing-page {
+    background-color: var(--bg-color);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* 终点页面 */
+.end-page {
+    background-color: var(--end-overlay);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 90;
+    position: fixed;
+    height: 100%;
+    flex-direction: column;
+}
+
+.end-message {
+    font-size: 60px;
+    font-weight: bold;
+    color: var(--end-text);
+    text-align: center;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* 顶部标题区域 */
+.header {
+    height: 35px;
+    background-color: var(--header-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0; /* 防止标题区域被压缩 */
+}
+
+.header h1 {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* 主要内容区域 */
+.main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden; /* 防止外部滚动 */
+    min-height: 0; /* 允许flex子项缩小 */
+}
+
+/* 左侧状态栏 */
+.left-panel {
+    flex: 1.5;
+    border-right: 1px solid var(--border-color);
+    padding: 10px;
+    position: relative;
+    overflow-y: auto;
+    background-color: var(--panel-bg);
+    min-height: 0; /* 允许flex子项缩小 */
+}
+
+/* 状态栏标题 */
+.left-panel h2 {
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+/* 状态项 */
+.status-item {
+    margin-bottom: 15px;
+}
+
+/* 状态标签 */
+.status-label {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+/* 子项（缩进） */
+.sub-item {
+    margin-left: 15px;
+    margin-top: 8px;
+}
+
+/* 子项标签 */
+.sub-label {
+    font-size: 13px;
+    margin-bottom: 3px;
+}
+
+/* 中部选择与事件 */
+.center-panel {
+    flex: 6;
+    border-right: 1px solid var(--border-color);
+    padding: 10px;
+    position: relative;
+    overflow-y: auto;
+    background-color: var(--panel-bg);
+    min-height: 0; /* 允许flex子项缩小 */
+}
+
+/* 中部标题 */
+.center-panel h2 {
+    margin-bottom: 20px;
+    font-size: 16px;
+    text-align: center;
+}
+
+/* 右侧时间事记 */
+.right-panel {
+    flex: 2.5;
+    padding: 10px;
+    position: relative;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--panel-bg);
+    min-height: 0; /* 允许flex子项缩小 */
+}
+
+/* 右侧标题 */
+.right-panel h2 {
+    margin-bottom: 15px;
+    font-size: 16px;
+    text-align: center;
+}
+
+/* 时间事记分区 */
+.timeline-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* 允许flex子项缩小 */
+}
+
+.timeline-section h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+/* 时间事记内容区域 */
+.timeline-content {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    padding: 5px;
+    overflow-y: auto;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-color);
+    min-height: 0; /* 允许flex子项缩小 */
+}
+
+/* 关键事件列表 */
+.key-events-list {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0; /* 允许flex子项缩小 */
+}
+
+/* 分隔线 */
+.divider {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 10px 0;
+}
+
+/* 添加贯穿网页的竖线 */
+.left-panel::after,
+.center-panel::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 1px;
+    background-color: var(--border-color);
+}
