@@ -82,7 +82,16 @@ class ActivitySystem extends CoreSystem {
             
             if (window.evolutionSystem) {
                 const formattedFood = this.formatNumber(foodGained);
-                window.evolutionSystem.addDailyActivity(`捕猎成功！获得${formattedFood}点食物，力量+${strGain.toFixed(2)}，速度+${spdGain.toFixed(2)}，智慧+${intGain.toFixed(2)}，心理健康提升`);
+                const evolutionLevel = window.evolutionSystem.getEvolutionLevel();
+                let message = `捕猎成功！获得${formattedFood}点食物，力量+${strGain.toFixed(2)}，速度+${spdGain.toFixed(2)}`;
+                
+                // 修复BUG：50级之前不显示智慧值增长
+                if (evolutionLevel > 50) {
+                    message += `，智慧+${intGain.toFixed(2)}`;
+                }
+                
+                message += "，心理健康提升";
+                window.evolutionSystem.addDailyActivity(message);
             }
         }
         
@@ -107,23 +116,40 @@ class ActivitySystem extends CoreSystem {
         this.stateSystem.cooldowns.rest = this.stateSystem.maxCooldowns.rest;
         this.stateSystem.activityState = 'resting';
         
-        this.stateSystem.hunger = Math.min(100, this.stateSystem.hunger + 2);
+        // 检查是否为紧急状态
+        const isEmergency = this.stateSystem.hunger >= 65;
         
-        if (Math.random() < 0.2) {
-            this.stateSystem.strength = Math.max(0.1, this.stateSystem.strength - 0.02);
-        }
-        if (Math.random() < 0.2) {
-            this.stateSystem.speed = Math.max(0.1, this.stateSystem.speed - 0.02);
-        }
-        
-        this.stateSystem.mentalHealth = Math.min(100, this.stateSystem.mentalHealth + 5 + Math.random() * 5);
-        
-        if (Math.random() < 0.5) {
-            this.stateSystem.disease = Math.max(0, this.stateSystem.disease - 3);
-        }
-        
-        if (window.evolutionSystem) {
-            window.evolutionSystem.addDailyActivity("休息了一段时间，心理健康值提升，疾病值可能减少");
+        if (isEmergency) {
+            // 紧急状态下的休息效果
+            this.stateSystem.hunger = Math.min(100, this.stateSystem.hunger + 1); // 饥饿增加更慢
+            this.stateSystem.disease = Math.min(100, this.stateSystem.disease + 3); // 疾病值增加
+            this.stateSystem.mentalHealth = Math.max(0, this.stateSystem.mentalHealth - 5); // 心理健康下降
+            
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addDailyActivity("进入了紧急状态休息，饥饿缓慢增加，疾病值增加，心理健康下降");
+                window.evolutionSystem.addKeyEvent("进入了紧急状态，身体机能削弱，疾病值增加" + 
+                    (window.evolutionRouteSystem && window.evolutionRouteSystem.hasThought ? "，心理健康值下降" : ""));
+            }
+        } else {
+            // 正常状态下的休息效果
+            this.stateSystem.hunger = Math.min(100, this.stateSystem.hunger + 2);
+            
+            if (Math.random() < 0.2) {
+                this.stateSystem.strength = Math.max(0.1, this.stateSystem.strength - 0.02);
+            }
+            if (Math.random() < 0.2) {
+                this.stateSystem.speed = Math.max(0.1, this.stateSystem.speed - 0.02);
+            }
+            
+            this.stateSystem.mentalHealth = Math.min(100, this.stateSystem.mentalHealth + 5 + Math.random() * 5);
+            
+            if (Math.random() < 0.5) {
+                this.stateSystem.disease = Math.max(0, this.stateSystem.disease - 3);
+            }
+            
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addDailyActivity("休息了一段时间，心理健康值提升，疾病值可能减少");
+            }
         }
         
         this.stateSystem.updateUI();
@@ -141,27 +167,52 @@ class ActivitySystem extends CoreSystem {
         this.stateSystem.cooldowns.dormancy = this.stateSystem.maxCooldowns.dormancy;
         this.stateSystem.activityState = 'dormant';
         
-        this.stateSystem.hunger = Math.min(100, this.stateSystem.hunger + 1);
+        // 检查是否为紧急状态
+        const isEmergency = this.stateSystem.hunger >= 65;
         
-        if (Math.random() < 0.3) {
-            this.stateSystem.strength = Math.max(0.1, this.stateSystem.strength - 0.05);
-        }
-        if (Math.random() < 0.3) {
-            this.stateSystem.speed = Math.max(0.1, this.stateSystem.speed - 0.05);
-        }
-        
-        if (Math.random() < 0.6) {
-            this.stateSystem.mentalHealth = Math.min(100, this.stateSystem.mentalHealth + 8);
+        if (isEmergency) {
+            // 紧急状态下的蛰伏效果
+            this.stateSystem.hunger = Math.min(100, this.stateSystem.hunger + 0.5); // 饥饿超级缓慢增加
+            this.stateSystem.disease = Math.min(100, this.stateSystem.disease + 2); // 疾病值增加
+            this.stateSystem.mentalHealth = Math.max(0, this.stateSystem.mentalHealth - 3); // 心理健康下降
+            
+            // 紧急蛰伏时属性下降更明显
+            if (Math.random() < 0.4) {
+                this.stateSystem.strength = Math.max(0.1, this.stateSystem.strength - 0.08);
+            }
+            if (Math.random() < 0.4) {
+                this.stateSystem.speed = Math.max(0.1, this.stateSystem.speed - 0.08);
+            }
+            
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addDailyActivity("进入了紧急状态蛰伏，饥饿超级缓慢增加，疾病值增加，心理健康下降");
+                window.evolutionSystem.addKeyEvent("进入了紧急状态，身体机能削弱，疾病值增加" + 
+                    (window.evolutionRouteSystem && window.evolutionRouteSystem.hasThought ? "，心理健康值下降" : ""));
+            }
         } else {
-            this.stateSystem.mentalHealth = Math.max(0, this.stateSystem.mentalHealth - 3);
-        }
-        
-        if (Math.random() < 0.7) {
-            this.stateSystem.disease = Math.max(0, this.stateSystem.disease - 5);
-        }
-        
-        if (window.evolutionSystem) {
-            window.evolutionSystem.addDailyActivity("进行了蛰伏，疾病值显著减少，但属性可能下降");
+            // 正常状态下的蛰伏效果
+            this.stateSystem.hunger = Math.min(100, this.stateSystem.hunger + 1);
+            
+            if (Math.random() < 0.3) {
+                this.stateSystem.strength = Math.max(0.1, this.stateSystem.strength - 0.05);
+            }
+            if (Math.random() < 0.3) {
+                this.stateSystem.speed = Math.max(0.1, this.stateSystem.speed - 0.05);
+            }
+            
+            if (Math.random() < 0.6) {
+                this.stateSystem.mentalHealth = Math.min(100, this.stateSystem.mentalHealth + 8);
+            } else {
+                this.stateSystem.mentalHealth = Math.max(0, this.stateSystem.mentalHealth - 3);
+            }
+            
+            if (Math.random() < 0.7) {
+                this.stateSystem.disease = Math.max(0, this.stateSystem.disease - 5);
+            }
+            
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addDailyActivity("进行了蛰伏，疾病值显著减少，但属性可能下降");
+            }
         }
         
         this.stateSystem.updateUI();
@@ -230,7 +281,13 @@ class ActivitySystem extends CoreSystem {
         if (Math.random() < 0.3) {
             this.stateSystem.intelligence = Math.min(this.stateSystem.maxAttribute, this.stateSystem.intelligence + 0.03);
             if (window.evolutionSystem) {
-                window.evolutionSystem.addDailyActivity("探索增加了智慧");
+                const evolutionLevel = window.evolutionSystem.getEvolutionLevel();
+                // 修复BUG：50级之前不显示智慧值增长
+                if (evolutionLevel > 50) {
+                    window.evolutionSystem.addDailyActivity("探索增加了智慧");
+                } else {
+                    window.evolutionSystem.addDailyActivity("探索获得了新的认知");
+                }
             }
         }
         
@@ -329,7 +386,13 @@ class ActivitySystem extends CoreSystem {
         
         // 记录活动
         if (window.evolutionSystem) {
-            window.evolutionSystem.addDailyActivity(`进行了思考，智慧+${intelligenceGain.toFixed(3)}`);
+            const evolutionLevel = window.evolutionSystem.getEvolutionLevel();
+            // 修复BUG：50级之前不显示智慧值增长
+            if (evolutionLevel > 50) {
+                window.evolutionSystem.addDailyActivity(`进行了思考，智慧+${intelligenceGain.toFixed(3)}`);
+            } else {
+                window.evolutionSystem.addDailyActivity("进行了思考，获得了新的认知");
+            }
         }
         
         // 如果是第一次思考，解锁心理健康值和高级互动
@@ -377,7 +440,13 @@ class ActivitySystem extends CoreSystem {
             } else {
                 const intelligenceGain = 0.02 + Math.random() * 0.03;
                 this.stateSystem.intelligence = Math.min(this.stateSystem.maxAttribute, this.stateSystem.intelligence + intelligenceGain);
-                message += `，智慧+${intelligenceGain.toFixed(3)}`;
+                const evolutionLevel = window.evolutionSystem.getEvolutionLevel();
+                // 修复BUG：50级之前不显示智慧值增长
+                if (evolutionLevel > 50) {
+                    message += `，智慧+${intelligenceGain.toFixed(3)}`;
+                } else {
+                    message += "，获得了新的认知";
+                }
             }
             // 增加心理健康值
             this.stateSystem.mentalHealth = Math.min(100, this.stateSystem.mentalHealth + 5);
@@ -458,7 +527,13 @@ class ActivitySystem extends CoreSystem {
             this.stateSystem.mentalHealth = Math.min(100, this.stateSystem.mentalHealth + 8);
             
             if (window.evolutionSystem) {
-                window.evolutionSystem.addDailyActivity(`成功制作了工具，智慧+${intelligenceGain.toFixed(3)}，心理健康提升`);
+                const evolutionLevel = window.evolutionSystem.getEvolutionLevel();
+                // 修复BUG：50级之前不显示智慧值增长
+                if (evolutionLevel > 50) {
+                    window.evolutionSystem.addDailyActivity(`成功制作了工具，智慧+${intelligenceGain.toFixed(3)}，心理健康提升`);
+                } else {
+                    window.evolutionSystem.addDailyActivity("成功制作了工具，获得了新的认知，心理健康提升");
+                }
                 window.evolutionSystem.addKeyEvent("成功制作了第一个工具！");
             }
         } else {
