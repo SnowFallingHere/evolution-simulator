@@ -1,26 +1,3 @@
-// 错误处理 - 捕获并显示部署问题
-window.addEventListener('error', function(e) {
-    console.error('全局错误:', e.error);
-    // 在页面上显示错误信息
-    const errorDiv = document.createElement('div');
-    errorDiv.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background: #ff4444;
-        color: white;
-        padding: 10px;
-        z-index: 9999;
-        font-family: Arial, sans-serif;
-    `;
-    errorDiv.innerHTML = `
-        <strong>加载错误:</strong> ${e.message} 
-        <br><small>请检查控制台获取详细信息</small>
-    `;
-    document.body.appendChild(errorDiv);
-});
-
 // 主程序 - 初始化所有系统
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM加载完成，开始初始化系统");
@@ -31,19 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
         pages.forEach(page => {
             page.style.display = 'none';
         });
-        
-        // 显示开始页面作为后备
-        const startPage = document.getElementById('start');
-        if (startPage) {
-            startPage.style.display = 'flex';
-        }
-        
-        // 检查必要的全局函数
-        if (typeof CoreSystem === 'undefined') {
-            throw new Error('CoreSystem 未加载');
-        }
-        
-        console.log("核心系统加载成功");
         
         // 初始化事件系统
         const eventSystem = new EventSystem();
@@ -61,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const evolutionSystem = new EvolutionSystem(stateSystem, eventSystem);
         window.evolutionSystem = evolutionSystem;
         
-        // 初始化进化路线系统
+        // 初始化进化路线系统（最后初始化，它会控制页面显示）
         const evolutionRouteSystem = new EvolutionRouteSystem(stateSystem, eventSystem, evolutionSystem);
         window.evolutionRouteSystem = evolutionRouteSystem;
         
@@ -75,31 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
     } catch (error) {
         console.error("初始化过程中出现错误:", error);
-        
-        // 显示错误信息
-        const errorDiv = document.createElement('div');
-        errorDiv.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255, 68, 68, 0.9);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            z-index: 9999;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            max-width: 80%;
-        `;
-        errorDiv.innerHTML = `
-            <h3>🚨 初始化错误</h3>
-            <p><strong>${error.message}</strong></p>
-            <p>请检查浏览器控制台获取详细信息</p>
-            <button onclick="location.reload()" style="margin-top: 10px; padding: 5px 10px;">重新加载</button>
-        `;
-        document.body.appendChild(errorDiv);
-        
         // 如果出现错误，至少显示开始页面
         const startPage = document.getElementById('start');
         if (startPage) {
@@ -606,16 +545,16 @@ function initPageAndConsole(evolutionSystem, stateSystem, eventSystem) {
 function showPage(pageId) {
     console.log("全局showPage被调用:", pageId);
     const pages = document.querySelectorAll('.page');
-    pages.forEach(page => {
+    pages。forEach(page => {
         page.style.display = 'none';
     });
     
     const targetPage = document.getElementById(pageId);
     if (targetPage) {
-        targetPage.style。display = 'flex';
+        targetPage.style.display = 'flex';
         console.log("成功显示页面:", pageId);
     } else {
-        console。error("页面未找到:"， pageId);
+        console.error("页面未找到:", pageId);
     }
 }
 
@@ -631,7 +570,7 @@ function makeConsoleDraggable(element) {
     function dragMouseDown(e) {
         e = e || window.event;
         e.preventDefault();
-        pos3 = e.clientX;
+        pos3 = e。clientX;
         pos4 = e.clientY;
         document.onmouseup = closeDragElement;
         document.onmousemove = elementDrag;
@@ -653,3 +592,6 @@ function makeConsoleDraggable(element) {
         document.onmousemove = null;
     }
 }
+
+// 设置全局函数
+window.showPage = showPage;
