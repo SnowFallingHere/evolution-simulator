@@ -1,1 +1,1 @@
-const EVENT_DATA_SKY = []
+const EVENT_DATA_SKY = [];
