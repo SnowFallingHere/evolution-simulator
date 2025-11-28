@@ -3,37 +3,37 @@ const EVENT_DATA_SEA = [
 {
     area: "sea", level: 1, name: "浮游生物群", hunger: 3, disease: 0, mentalHealth: 0, duration: 3, 
     description: "你遇到了一片丰富的浮游生物群", rarity: "common"
-},
+}，
 {
     area: "sea", level: 1, name: "寒流袭击", hunger: -2, disease: 2, mentalHealth: -1, duration: 3, 
     description: "突如其来的寒流让你体温骤降，行动困难", rarity: "common"
-},
+}，
 {
     area: "sea", level: 1, name: "小型藻类爆发", hunger: 2, disease: 1, mentalHealth: 0, duration: 3, 
     description: "海水中藻类大量繁殖，提供了食物但也带来了不适", rarity: "common"
-},
+}，
 {
     area: "sea", level: 1, name: "缺氧水域", hunger: -1, disease: 1, mentalHealth: -2, duration: 4, 
     description: "进入了一片缺氧水域，呼吸困难", rarity: "common"
-},
+}，
 {
     area: "sea", level: 1, name: "海水温度变化", hunger: -1, disease: 1, mentalHealth: -1, duration: 3, 
     description: "海水温度突然变化，影响了你的状态", rarity: "common"
-},
+}，
 {
     area: "sea", level: 1, name: "微型甲壳类聚集", hunger: 3, disease: 0, mentalHealth: 0, duration: 3, 
     description: "大量微型甲壳类生物提供了丰富的食物", rarity: "common"
-},
+}，
 
 // 稀有事件 (Rare)
 {
     area: "sea", level: 1, name: "发光浮游生物", hunger: 2, disease: -1, mentalHealth: 2, duration: 4, 
     description: "夜晚的发光浮游生物创造了梦幻般的景象", rarity: "rare"
-},
+}，
 {
     area: "sea", level: 1, name: "海底温泉", hunger: 1, disease: -2, mentalHealth: 1, duration: 5, 
     description: "海底温泉提供了舒适的环境和疗愈效果", rarity: "rare"
-},
+}，
 {
     area: "sea", level: 1, name: "毒素泄露", hunger: -3, disease: 3, mentalHealth: -2, duration: 4, 
     description: "海底植物释放毒素，让你中毒不适", rarity: "rare"
@@ -152,4 +152,5 @@ const EVENT_DATA_SEA = [
     area: "sea", level: 3, name: "海洋本源觉醒", hunger: 6, disease: -5, mentalHealth: 15, duration: 20, 
     description: "触发了海洋本源的神秘力量，获得了深海的传承", rarity: "epic"
 }
+
 ];
