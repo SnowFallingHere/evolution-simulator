@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setupActivityListeners(activitySystem);
         
         // 初始化页面切换和控制台
-        initPageAndConsole(evolutionSystem, stateSystem);
+        initPageAndConsole(evolutionSystem, stateSystem, eventSystem);
         
         console.log("所有系统初始化完成");
         
@@ -117,7 +117,7 @@ function setupActivityListeners(activitySystem) {
 }
 
 // 初始化页面切换和控制台
-function initPageAndConsole(evolutionSystem, stateSystem) {
+function initPageAndConsole(evolutionSystem, stateSystem, eventSystem) {
     const deathPage = document.getElementById('death');
     const ongoingPage = document.getElementById('ongoing');
     const theEndPage = document.getElementById('theEnd');
@@ -139,12 +139,148 @@ function initPageAndConsole(evolutionSystem, stateSystem) {
     
     const themeToggle = document.getElementById('theme-toggle');
     
+    // 事件控制相关元素
+    const clearEventsBtn = document.getElementById('clear-events');
+    
     // 时间暂停状态
     let timePaused = false;
     
     // 控制台解锁机制 - 10秒内点击主题切换按钮10次
     let themeClickCount = 0;
     let themeClickTimer = null;
+    
+    // 当前选中的区域
+    let currentArea = 'sea';
+    
+    // 初始化事件选择界面
+    function initEventSelection() {
+        if (!window.eventSystem) return;
+        
+        // 延迟执行，确保事件系统已加载
+        setTimeout(() => {
+            updateEventButtonsByArea(currentArea);
+            
+            console.log(`事件选择界面初始化完成，当前区域: ${currentArea}`);
+            
+            // 设置选项卡切换
+            setupEventTabs();
+            setupAreaTabs();
+            
+        }, 2000);
+    }
+    
+    // 按区域更新事件按钮
+    function updateEventButtonsByArea(area) {
+        if (!window.eventSystem) return;
+        
+        const events = window.eventSystem.getEventsByArea(area);
+        
+        // 按稀有度分类事件
+        const commonEvents = events.filter(event => event.rarity === "common");
+        const rareEvents = events.filter(event => event.rarity === "rare");
+        const epicEvents = events.filter(event => event.rarity === "epic");
+        
+        // 清空现有事件按钮
+        const commonContainer = document.getElementById('common-events');
+        const rareContainer = document.getElementById('rare-events');
+        const epicContainer = document.getElementById('epic-events');
+        
+        commonContainer.innerHTML = '';
+        rareContainer.innerHTML = '';
+        epicContainer.innerHTML = '';
+        
+        // 填充普通事件选项卡
+        commonEvents.forEach(event => {
+            const eventBtn = createEventButton(event);
+            commonContainer.appendChild(eventBtn);
+        });
+        
+        // 填充稀有事件选项卡
+        rareEvents.forEach(event => {
+            const eventBtn = createEventButton(event);
+            rareContainer.appendChild(eventBtn);
+        });
+        
+        // 填充史诗事件选项卡
+        epicEvents.forEach(event => {
+            const eventBtn = createEventButton(event);
+            epicContainer.appendChild(eventBtn);
+        });
+        
+        console.log(`更新${window.eventSystem.getAreaName(area)}事件: ${commonEvents.length}个普通, ${rareEvents.length}个稀有, ${epicEvents.length}个史诗`);
+    }
+    
+    // 创建事件按钮
+    function createEventButton(event) {
+        const button = document.createElement('button');
+        button.className = `event-btn console-btn ${event.rarity}`;
+        button.textContent = event.name;
+        button.title = `${event.description} (等级${event.level})`;
+        
+        button.addEventListener('click', function() {
+            if (window.eventSystem) {
+                const success = window.eventSystem.triggerEventByName(event.name);
+                if (success) {
+                    console.log(`已触发事件: ${event.name}`);
+                } else {
+                    console.error(`无法触发事件: ${event.name}`);
+                }
+            }
+        });
+        
+        return button;
+    }
+    
+    // 设置事件选项卡切换
+    function setupEventTabs() {
+        const tabButtons = document.querySelectorAll('.event-tab-btn');
+        const tabPanes = document.querySelectorAll('.event-tab-pane');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetTab = this.getAttribute('data-tab');
+                
+                // 移除所有active类
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabPanes.forEach(pane => pane.classList.remove('active'));
+                
+                // 添加active类到当前选项卡
+                this.classList.add('active');
+                document.getElementById(`${targetTab}-events`).classList.add('active');
+            });
+        });
+    }
+    
+    // 设置区域选项卡切换
+    function setupAreaTabs() {
+        const areaButtons = document.querySelectorAll('.area-tab-btn');
+        
+        areaButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetArea = this.getAttribute('data-area');
+                
+                // 移除所有active类
+                areaButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // 添加active类到当前选项卡
+                this.classList.add('active');
+                
+                // 更新当前区域
+                currentArea = targetArea;
+                
+                // 更新事件系统当前区域
+                if (window.eventSystem) {
+                    window.eventSystem.setCurrentArea(targetArea);
+                }
+                
+                // 更新事件按钮
+                updateEventButtonsByArea(targetArea);
+            });
+        });
+    }
+    
+    // 初始化事件选择界面
+    initEventSelection();
     
     // 主题切换按钮事件监听 - 添加控制台解锁功能
     if (themeToggle) {
@@ -336,6 +472,29 @@ function initPageAndConsole(evolutionSystem, stateSystem) {
                 stateSystem.mentalHealth = value;
                 stateSystem.updateUI();
                 setMentalHealthInput.value = '';
+            }
+        });
+    }
+    
+    // 新增：设置食物储存
+    const setFoodStorageBtn = document.getElementById('set-food-storage');
+    const setFoodStorageInput = document.getElementById('set-food-storage-input');
+    if (setFoodStorageBtn && setFoodStorageInput) {
+        setFoodStorageBtn.addEventListener('click', function() {
+            const value = parseFloat(setFoodStorageInput.value);
+            if (!isNaN(value) && value >= 0) {
+                stateSystem.setFoodStorage(value);
+                setFoodStorageInput.value = '';
+            }
+        });
+    }
+    
+    // 新增：事件控制
+    if (clearEventsBtn) {
+        clearEventsBtn.addEventListener('click', function() {
+            if (window.eventSystem) {
+                window.eventSystem.clearAllEvents();
+                console.log("已清除所有活跃事件");
             }
         });
     }
