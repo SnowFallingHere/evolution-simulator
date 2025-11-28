@@ -6,6 +6,7 @@ class SaveManager extends CoreSystem {
         // 存档版本控制
         this.SAVE_VERSION = "1.0.0";
         this.STORAGE_KEY = "evolution_simulator_save";
+        this.AUTO_SAVE_KEY = "evolution_simulator_auto_save";
         
         // 初始化
         this.init();
@@ -25,7 +26,7 @@ class SaveManager extends CoreSystem {
     
     // 创建存档按钮
     createSaveButtons() {
-        // 获取时间显示元素
+        // 获取时间显示元素（桌面端用）
         const timeDisplay = document.getElementById('game-time-display');
         if (!timeDisplay) {
             console.warn("时间显示元素未找到，延迟创建存档按钮");
@@ -33,17 +34,23 @@ class SaveManager extends CoreSystem {
             return;
         }
         
-        // 创建按钮容器 - 使用提供的位置参数
+        // 创建按钮容器 - 基础样式（桌面端）+ 响应式适配（移动端）
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'save-buttons-container';
         buttonContainer.style.cssText = `
+            /* 桌面端样式：保持原有定位 */
             position: absolute;
-            right: 70px; /* 放在时间显示的左侧 */
+            right: 70px;
             top: 2.5%;
             transform: translateY(-50%);
             display: flex;
             gap: 8px;
-            z-index: 10;
+            z-index: 999; /* 提高层级，确保在抬头区域上方 */
+            
+            /* 基础flex属性 */
+            flex-wrap: nowrap;
+            align-items: center;
+            justify-content: center;
         `;
         
         // 导入存档按钮
@@ -99,7 +106,7 @@ class SaveManager extends CoreSystem {
             display: none;
         `;
         
-        // 添加悬停效果
+        // 按钮交互效果
         const buttons = [exportButton, importButton];
         buttons.forEach(button => {
             button.addEventListener('mouseenter', () => {
@@ -110,7 +117,6 @@ class SaveManager extends CoreSystem {
                 button.style.backgroundColor = 'var(--button-bg)';
                 button.style.transform = 'scale(1)';
             });
-            
             button.addEventListener('mousedown', () => {
                 button.style.transform = 'scale(0.95)';
             });
@@ -130,123 +136,99 @@ class SaveManager extends CoreSystem {
     
     // 设置事件监听器
     setupEventListeners() {
-        // 延迟绑定，确保按钮已创建
-        setTimeout(() => {
-            const exportButton = document.getElementById('export-save');
-            const importButton = document.getElementById('import-save');
-            const fileInput = document.getElementById('save-file-input');
-            
-            if (exportButton) {
-                exportButton.addEventListener('click', () => {
-                    this.exportSave();
-                });
-            }
-            
-            if (importButton && fileInput) {
-                importButton.addEventListener('click', () => {
-                    fileInput.click();
-                });
-                
-                fileInput.addEventListener('change', (event) => {
-                    this.importSave(event);
-                });
-            }
-        }, 1000);
-    }
-    
-    // 收集所有游戏数据
-    collectGameData() {
-        const gameData = {
-            version: this.SAVE_VERSION,
-            timestamp: Date.now(),
-            stateData: null,
-            evolutionData: null,
-            eventData: null,
-            routeData: null
-        };
+        const importButton = document.getElementById('import-save');
+        const exportButton = document.getElementById('export-save');
+        const fileInput = document.getElementById('save-file-input');
         
-        // 收集状态系统数据
-        if (window.stateSystem) {
-            gameData.stateData = {
-                strength: window.stateSystem.strength,
-                speed: window.stateSystem.speed,
-                intelligence: window.stateSystem.intelligence,
-                maxAttribute: window.stateSystem.maxAttribute,
-                hunger: window.stateSystem.hunger,
-                mentalHealth: window.stateSystem.mentalHealth,
-                disease: window.stateSystem.disease,
-                foodStorage: window.stateSystem.foodStorage,
-                maxFoodStorage: window.stateSystem.maxFoodStorage,
-                cooldowns: {...window.stateSystem.cooldowns},
-                maxCooldowns: {...window.stateSystem.maxCooldowns},
-                globalCooldown: window.stateSystem.globalCooldown,
-                activityState: window.stateSystem.activityState,
-                timePaused: window.stateSystem.timePaused,
-                gameTime: {...window.stateSystem.gameTime}
-            };
+        if (exportButton) {
+            exportButton.addEventListener('click', () => {
+                this.exportSave();
+            });
         }
         
-        // 收集进化系统数据
-        if (window.evolutionSystem) {
-            gameData.evolutionData = {
+        if (importButton && fileInput) {
+            importButton.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', (event) => {
+                this.importSave(event);
+            });
+        }
+    }
+    
+    // 收集游戏数据
+    collectGameData() {
+        if (!window.stateSystem || !window.evolutionSystem) {
+            console.error("游戏系统未初始化");
+            return null;
+        }
+        
+        const saveData = {
+            // 元数据
+            version: this.SAVE_VERSION,
+            timestamp: Date.now(),
+            gameTime: window.stateSystem.gameTime,
+            
+            // 状态系统数据
+            stateData: window.stateSystem.getStateData(),
+            
+            // 进化系统数据
+            evolutionData: {
                 evolutionLevel: window.evolutionSystem.evolutionLevel,
                 evolutionPoints: window.evolutionSystem.evolutionPoints,
                 requiredPoints: window.evolutionSystem.requiredPoints
-            };
-        }
-        
-        // 收集事件系统数据
-        if (window.eventSystem) {
-            gameData.eventData = {
+            },
+            
+            // 事件系统数据
+            eventData: window.eventSystem ? {
                 currentArea: window.eventSystem.currentArea,
                 activeEvents: Array.from(window.eventSystem.activeEvents.values())
-            };
-        }
-        
-        // 收集进化路线数据
-        if (window.evolutionRouteSystem) {
-            gameData.routeData = {
+            } : null,
+            
+            // 进化路线系统数据
+            routeData: window.evolutionRouteSystem ? {
                 gameStarted: window.evolutionRouteSystem.gameStarted,
                 hasThought: window.evolutionRouteSystem.hasThought
-            };
-        }
+            } : null
+        };
         
-        return gameData;
+        return saveData;
     }
     
     // 导出存档
     exportSave() {
+        const saveData = this.collectGameData();
+        if (!saveData) {
+            alert("无法导出存档：游戏数据未初始化");
+            return;
+        }
+        
         try {
-            const gameData = this.collectGameData();
-            const jsonData = JSON.stringify(gameData, null, 2);
+            const dataStr = JSON.stringify(saveData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
             
             // 创建下载链接
-            const blob = new Blob([jsonData], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            
-            // 生成文件名
-            const date = new Date();
-            const timestamp = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
-            a.download = `evolution_simulator_save_${timestamp}.json`;
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `evolution_simulator_save_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
             
             // 触发下载
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
             URL.revokeObjectURL(url);
-            
-            // 在关键事件中记录
-            if (window.evolutionSystem) {
-                window.evolutionSystem.addKeyEvent("💾 游戏存档已导出");
-            }
             
             console.log("存档导出成功");
             
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addKeyEvent("游戏存档已导出");
+            }
+            
         } catch (error) {
-            console.error("存档导出失败:", error);
-            this.showMessage('存档导出失败！', 'error');
+            console.error("导出存档失败:", error);
+            alert("导出存档失败，请查看控制台了解详情");
         }
     }
     
@@ -258,132 +240,130 @@ class SaveManager extends CoreSystem {
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                const gameData = JSON.parse(e.target.result);
-                this.loadGameData(gameData);
+                const saveData = JSON.parse(e.target.result);
+                this.applySaveData(saveData);
                 
                 // 重置文件输入
                 event.target.value = '';
                 
             } catch (error) {
-                console.error("存档导入失败:", error);
-                this.showMessage('存档文件格式错误！', 'error');
+                console.error("导入存档失败:", error);
+                alert("导入存档失败：文件格式不正确");
             }
         };
         
         reader.readAsText(file);
     }
     
-    // 加载游戏数据
-    loadGameData(gameData) {
+    // 应用存档数据
+    applySaveData(saveData) {
+        if (!saveData.version || saveData.version !== this.SAVE_VERSION) {
+            alert(`存档版本不兼容。当前版本：${this.SAVE_VERSION}，存档版本：${saveData.version || '未知'}`);
+            return;
+        }
+        
+        if (!window.stateSystem || !window.evolutionSystem) {
+            alert("游戏系统未初始化，无法导入存档");
+            return;
+        }
+        
         try {
-            // 验证存档版本
-            if (!gameData.version || gameData.version !== this.SAVE_VERSION) {
-                if (!confirm(`存档版本不匹配（${gameData.version} → ${this.SAVE_VERSION}）。是否继续加载？`)) {
-                    return;
-                }
+            // 应用状态系统数据
+            if (saveData.stateData) {
+                window.stateSystem.loadSavedData(saveData.stateData);
             }
             
-            // 加载状态系统数据
-            if (gameData.stateData && window.stateSystem) {
-                window.stateSystem.strength = gameData.stateData.strength || 1.0;
-                window.stateSystem.speed = gameData.stateData.speed || 1.0;
-                window.stateSystem.intelligence = gameData.stateData.intelligence || 1.0;
-                window.stateSystem.hunger = gameData.stateData.hunger || 0;
-                window.stateSystem.mentalHealth = gameData.stateData.mentalHealth || 0;
-                window.stateSystem.disease = gameData.stateData.disease || 0;
-                window.stateSystem.foodStorage = gameData.stateData.foodStorage || 20;
-                
-                if (gameData.stateData.cooldowns) {
-                    Object.assign(window.stateSystem.cooldowns, gameData.stateData.cooldowns);
-                }
-                
-                if (gameData.stateData.gameTime) {
-                    Object.assign(window.stateSystem.gameTime, gameData.stateData.gameTime);
-                }
-                
-                window.stateSystem.timePaused = gameData.stateData.timePaused || false;
-                window.stateSystem.activityState = gameData.stateData.activityState || 'idle';
-                
-                window.stateSystem.updateUI();
-                window.stateSystem.setButtonStates();
-                window.stateSystem.updateTimeDisplay();
-            }
-            
-            // 加载进化系统数据
-            if (gameData.evolutionData && window.evolutionSystem) {
-                window.evolutionSystem.evolutionLevel = gameData.evolutionData.evolutionLevel || 0;
-                window.evolutionSystem.evolutionPoints = gameData.evolutionData.evolutionPoints || 0;
-                window.evolutionSystem.requiredPoints = gameData.evolutionData.requiredPoints || window.evolutionSystem.calculateRequiredPoints(1);
-                
+            // 应用进化系统数据
+            if (saveData.evolutionData) {
+                window.evolutionSystem.evolutionLevel = saveData.evolutionData.evolutionLevel;
+                window.evolutionSystem.evolutionPoints = saveData.evolutionData.evolutionPoints;
+                window.evolutionSystem.requiredPoints = saveData.evolutionData.requiredPoints;
                 window.evolutionSystem.updateUI();
                 window.evolutionSystem.updateRequirementsList();
-                window.evolutionSystem.checkEvolution();
             }
             
-            // 加载事件系统数据
-            if (gameData.eventData && window.eventSystem) {
-                window.eventSystem.currentArea = gameData.eventData.currentArea || 'sea';
-                if (gameData.eventData.activeEvents) {
-                    window.eventSystem.activeEvents.clear();
-                    gameData.eventData.activeEvents.forEach(event => {
+            // 应用事件系统数据
+            if (saveData.eventData && window.eventSystem) {
+                window.eventSystem.currentArea = saveData.eventData.currentArea;
+                // 重新加载活跃事件
+                window.eventSystem.activeEvents.clear();
+                if (saveData.eventData.activeEvents) {
+                    saveData.eventData.activeEvents.forEach(event => {
                         window.eventSystem.activeEvents.set(event.name, event);
                     });
                 }
             }
             
-            // 加载进化路线数据
-            if (gameData.routeData && window.evolutionRouteSystem) {
-                window.evolutionRouteSystem.gameStarted = gameData.routeData.gameStarted || false;
-                window.evolutionRouteSystem.hasThought = gameData.routeData.hasThought || false;
-                
-                // 更新按钮显示状态
+            // 应用进化路线系统数据
+            if (saveData.routeData && window.evolutionRouteSystem) {
+                window.evolutionRouteSystem.gameStarted = saveData.routeData.gameStarted;
+                window.evolutionRouteSystem.hasThought = saveData.routeData.hasThought;
                 window.evolutionRouteSystem.updateAvailableButtons();
-                window.evolutionRouteSystem.updateAttributeDisplay(window.evolutionSystem.evolutionLevel);
+                window.evolutionRouteSystem.updateAttributeDisplay(window.evolutionSystem.getEvolutionLevel());
             }
             
-            // 在关键事件中记录
-            if (window.evolutionSystem) {
-                window.evolutionSystem.addKeyEvent("📁 游戏存档已导入");
-            }
+            // 更新所有UI
+            window.stateSystem.updateUI();
+            window.stateSystem.setButtonStates();
             
             console.log("存档导入成功");
             
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addKeyEvent("游戏存档已导入");
+                if (saveData.gameTime) {
+                    window.evolutionSystem.addKeyEvent(`恢复到第${saveData.gameTime.day}天`);
+                }
+            }
+            
         } catch (error) {
-            console.error("加载游戏数据失败:", error);
-            this.showMessage('存档加载失败！', 'error');
+            console.error("应用存档数据失败:", error);
+            alert("导入存档失败，数据可能已损坏");
         }
     }
     
     // 自动保存
     autoSave() {
-        try {
-            const gameData = this.collectGameData();
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(gameData));
-            console.log("自动保存完成");
-        } catch (error) {
-            console.error("自动保存失败:", error);
+        const saveData = this.collectGameData();
+        if (saveData) {
+            try {
+                localStorage.setItem(this.AUTO_SAVE_KEY, JSON.stringify(saveData));
+                console.log("自动保存完成");
+            } catch (error) {
+                console.error("自动保存失败:", error);
+            }
         }
+    }
+    
+    // 启动自动保存
+    startAutoSave() {
+        // 每30秒自动保存一次
+        const timer = setInterval(() => {
+            this.autoSave();
+        }, 30000);
+        this.timers.push(timer);
+        
+        // 页面关闭前自动保存
+        window.addEventListener('beforeunload', () => {
+            this.autoSave();
+        });
     }
     
     // 检查自动保存
     checkAutoSave() {
         try {
-            const savedData = localStorage.getItem(this.STORAGE_KEY);
-            if (savedData) {
-                const gameData = JSON.parse(savedData);
+            const autoSaveData = localStorage.getItem(this.AUTO_SAVE_KEY);
+            if (autoSaveData) {
+                const saveData = JSON.parse(autoSaveData);
                 
-                // 检查存档时间（24小时内）
-                const saveTime = gameData.timestamp;
-                const currentTime = Date.now();
-                const hoursDiff = (currentTime - saveTime) / (1000 * 60 * 60);
-                
-                if (hoursDiff < 24) {
-                    if (confirm("发现自动保存的存档（24小时内）。是否加载？")) {
-                        this.loadGameData(gameData);
-                    }
+                // 检查是否为同一版本
+                if (saveData.version === this.SAVE_VERSION) {
+                    console.log("检测到自动保存的存档");
+                    
+                    // 可以在这里添加提示用户是否加载自动存档的代码
+                    // this.promptLoadAutoSave(saveData);
                 } else {
-                    // 删除过期的自动保存
-                    localStorage.removeItem(this.STORAGE_KEY);
+                    console.log("自动保存的存档版本不匹配，已忽略");
+                    localStorage.removeItem(this.AUTO_SAVE_KEY);
                 }
             }
         } catch (error) {
@@ -391,59 +371,26 @@ class SaveManager extends CoreSystem {
         }
     }
     
-    // 显示消息（仅用于错误提示）
-    showMessage(message, type = 'error') {
-        // 只在错误时显示弹窗
-        if (type !== 'error') return;
-        
-        // 创建消息元素
-        const messageElement = document.createElement('div');
-        messageElement.textContent = message;
-        messageElement.style.cssText = `
-            position: fixed;
-            top: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 10000;
-            font-size: 14px;
-            font-weight: bold;
-            max-width: 80%;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            background-color: #f44336;
-            color: white;
-        `;
-        
-        // 添加到页面
-        document.body.appendChild(messageElement);
-        
-        // 3秒后自动移除
-        setTimeout(() => {
-            if (messageElement.parentNode) {
-                messageElement.parentNode.removeChild(messageElement);
-            }
-        }, 3000);
+    // 提示加载自动存档（可选功能）
+    promptLoadAutoSave(saveData) {
+        if (confirm("检测到自动保存的存档，是否加载？")) {
+            this.applySaveData(saveData);
+        }
     }
     
-    // 启动自动保存定时器
-    startAutoSave() {
-        const timer = setInterval(() => {
-            this.autoSave();
-        }, 300000); // 每5分钟自动保存一次
-        this.timers.push(timer);
-    }
-    
-    // 清理
-    cleanup() {
-        super.cleanup();
+    // 清理自动存档
+    clearAutoSave() {
+        try {
+            localStorage.removeItem(this.AUTO_SAVE_KEY);
+            console.log("自动存档已清除");
+        } catch (error) {
+            console.error("清除自动存档失败:", error);
+        }
     }
 }
 
 // 初始化存档管理器
 document.addEventListener('DOMContentLoaded', function() {
-    // 延迟初始化，确保其他系统已加载
     setTimeout(() => {
         if (!window.saveManager) {
             window.saveManager = new SaveManager();
@@ -451,3 +398,91 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 3000);
 });
+
+// 响应式样式
+const style = document.createElement('style');
+style.textContent = `
+    /* 存档按钮响应式适配 - 核心优化 */
+    /* 平板/小屏设备（768px以下） */
+    @media (max-width: 768px) {
+        .save-buttons-container {
+            position: fixed !important; /* 固定在顶部抬头区域 */
+            top: 7px !important; /* 贴合顶部 */
+            right: 75px !important; /* 基础右侧间距35px（满足最小要求） */
+            left: auto !important;
+            transform: translateX(0) translateY(0) !important; /* 先取消偏移 */
+            /* 关键：通过max-width和margin实现"越小越居中" */
+            max-width: calc(100% - 150px) !important; /* 左右各留75px，限制最大宽度 */
+            margin: 0 auto !important; /* 水平居中 */
+            gap: 8px !important;
+        }
+        
+        .save-button {
+            width: 32px !important;
+            height: 26px !important;
+            font-size: 14px !important;
+        }
+    }
+    
+    /* 手机设备（480px以下）- 更居中 */
+    @media (max-width: 480px) {
+        .save-buttons-container {
+            top: 8px !important;
+            right: 75px !important; /* 保持≥35px */
+            left: 75px !important; /* 左侧也留35px，强制居中 */
+            max-width: 100% !important;
+            justify-content: center !important; /* 容器内元素居中 */
+            gap: 6px !important;
+        }
+        
+        .save-button {
+            width: 30px !important;
+            height: 24px !important;
+            font-size: 13px !important;
+        }
+    }
+    
+    /* 窄屏手机（320px以下）- 最大化居中 */
+    @media (max-width: 320px) {
+        .save-buttons-container {
+            top: 6px !important;
+            right: 75px !important; /* 强制保留35px右侧间距 */
+            left: 75px !important; /* 强制保留35px左侧间距 */
+            gap: 5px !important;
+        }
+        
+        .save-button {
+            width: 28px !important;
+            height: 22px !important;
+            font-size: 12px !important;
+        }
+    }
+    
+    /* 桌面端保持原有样式 */
+    @media (min-width: 769px) {
+        .save-buttons-container {
+            z-index: 999 !important;
+        }
+    }
+    
+    /* 确保按钮可点击性和视觉优化 */
+    .save-button {
+        min-width: 24px;
+        min-height: 20px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        border: none !important;
+        border-radius: 6px !important;
+    }
+    
+    /* 防止文本选择和遮挡 */
+    .save-buttons-container {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        pointer-events: auto;
+        z-index: 9999 !important; /* 确保在抬头区域最上层 */
+    }
+`;
+document.head.appendChild(style);
