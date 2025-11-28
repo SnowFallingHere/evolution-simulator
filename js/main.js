@@ -549,27 +549,27 @@ function showPage(pageId) {
         page.style.display = 'none';
     });
     
-    const targetPage = document.getElementById(pageId);
+    const targetPage = document。getElementById(pageId);
     if (targetPage) {
         targetPage.style.display = 'flex';
         console.log("成功显示页面:", pageId);
     } else {
-        console.error("页面未找到:", pageId);
+        console.error("页面未找到:"， pageId);
     }
 }
 
 // 使控制台可拖拽的函数
 function makeConsoleDraggable(element) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    const header = element.querySelector('.console-header');
+    const header = element。querySelector('.console-header');
     
     if (!header) return;
     
-    header.onmousedown = dragMouseDown;
+    header。onmousedown = dragMouseDown;
     
     function dragMouseDown(e) {
         e = e || window.event;
-        e.preventDefault();
+        e。preventDefault();
         pos3 = e。clientX;
         pos4 = e.clientY;
         document.onmouseup = closeDragElement;
