@@ -54,14 +54,82 @@ class StateSystem extends CoreSystem {
         // 时间暂停状态
         this.timePaused = false;
         
+        // 游戏时间系统
+        this.gameTime = {
+            day: 1,
+            hour: 0,
+            minute: 0
+        };
+        
         this.init();
     }
     
     init() {
         this.startStateChanges();
         this.startHungerCheck();
+        this.startGameTime();
         this.updateUI();
         this.setButtonStates();
+    }
+    
+    // 启动游戏时间系统
+    startGameTime() {
+        const timer = setInterval(() => {
+            if (!this.timePaused) {
+                this.updateGameTime();
+            }
+        }, 1000); // 每秒更新一次游戏时间
+        this.timers.push(timer);
+    }
+    
+    // 更新游戏时间 - 现实1分钟 = 游戏1天
+    updateGameTime() {
+        // 现实1秒 = 游戏24分钟 (24小时/60分钟 = 0.4小时/秒 = 24分钟/秒)
+        this.gameTime.minute += 24;
+        
+        if (this.gameTime.minute >= 60) {
+            this.gameTime.hour += Math.floor(this.gameTime.minute / 60);
+            this.gameTime.minute = this.gameTime.minute % 60;
+        }
+        
+        if (this.gameTime.hour >= 24) {
+            this.gameTime.day += Math.floor(this.gameTime.hour / 24);
+            this.gameTime.hour = this.gameTime.hour % 24;
+        }
+        
+        // 更新UI中的时间显示
+        this.updateTimeDisplay();
+    }
+    
+    // 更新时间显示
+    updateTimeDisplay() {
+        const timeDisplay = document.getElementById('game-time-display');
+        if (timeDisplay) {
+            const formattedHour = this.gameTime.hour.toString().padStart(2, '0');
+            const formattedMinute = this.gameTime.minute.toString().padStart(2, '0');
+            timeDisplay.textContent = `第${this.gameTime.day}天 ${formattedHour}:${formattedMinute}`;
+        }
+        
+        // 更新昼夜提示
+        this.updateDayNightHint();
+    }
+    
+    // 更新昼夜提示
+    updateDayNightHint() {
+        const dayNightHint = document.getElementById('day-night-hint');
+        if (dayNightHint) {
+            let timeOfDay = '';
+            if (this.gameTime.hour >= 5 && this.gameTime.hour < 12) {
+                timeOfDay = '早晨';
+            } else if (this.gameTime.hour >= 12 && this.gameTime.hour < 18) {
+                timeOfDay = '下午';
+            } else if (this.gameTime.hour >= 18 && this.gameTime.hour < 22) {
+                timeOfDay = '傍晚';
+            } else {
+                timeOfDay = '夜晚';
+            }
+            dayNightHint.textContent = timeOfDay;
+        }
     }
     
     // 设置时间暂停状态
@@ -264,10 +332,14 @@ class StateSystem extends CoreSystem {
     
     // 检查活动是否可用
     canStartActivity(activity) {
-        // 如果已经在进行中，不能开始新活动（除了休息时可以蛰伏）
-        if (this.activityState !== 'idle' && 
-            !(this.activityState === 'resting' && activity === 'dormancy')) {
-            return false;
+        // 修复BUG：不能从休息状态立即转为蛰伏状态，除非处于紧急状态
+        if (this.activityState !== 'idle') {
+            // 只有在紧急状态（饥饿值>=65）且从休息转为蛰伏时才允许
+            if (this.activityState === 'resting' && activity === 'dormancy' && this.hunger >= 65) {
+                // 紧急状态允许转换
+            } else {
+                return false;
+            }
         }
         
         if (this.cooldowns[activity] > 0) {
@@ -304,8 +376,8 @@ class StateSystem extends CoreSystem {
         if (toolButton) toolButton.disabled = !this.canStartActivity('tool');
         if (socialButton) socialButton.disabled = !this.canStartActivity('social');
         
-        // 特殊规则：休息时可以进入蛰伏
-        if (this.activityState === 'resting' && dormancyButton) {
+        // 特殊规则：紧急状态时，休息时可以进入蛰伏
+        if (this.activityState === 'resting' && dormancyButton && this.hunger >= 65) {
             dormancyButton.disabled = this.cooldowns.dormancy > 0 || this.globalCooldown > 0;
         }
         
@@ -323,6 +395,9 @@ class StateSystem extends CoreSystem {
     }
     
     checkDeath() {
+        // 修复BUG：如果时间暂停，不进行死亡检查
+        if (this.timePaused) return false;
+        
         const evolutionLevel = window.evolutionSystem ? window.evolutionSystem.getEvolutionLevel() : 0;
         const hasThought = window.evolutionRouteSystem ? window.evolutionRouteSystem.hasThought : false;
         
@@ -432,5 +507,17 @@ class StateSystem extends CoreSystem {
         this.strength = Math.min(this.maxAttribute, this.strength + 0.1 + Math.random() * 0.2);
         this.speed = Math.min(this.maxAttribute, this.speed + 0.1 + Math.random() * 0.2);
         this.intelligence = Math.min(this.maxAttribute, this.intelligence + 0.1 + Math.random() * 0.2);
+    }
+    
+    // 新增：设置食物储存数量
+    setFoodStorage(amount) {
+        if (!isNaN(amount) && amount >= 0) {
+            this.foodStorage = Math.min(amount, this.maxFoodStorage);
+            this.updateUI();
+            
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addKeyEvent(`通过控制台设定食物储存为 ${this.formatFoodStorage()}`);
+            }
+        }
     }
 }
