@@ -101,6 +101,9 @@ class ActivitySystem extends CoreSystem {
             this.stateSystem.setButtonStates();
         }, 100);
         
+        // 增加事件触发概率
+        this.increaseEventProbability();
+        
         this.stateSystem.updateUI();
         this.stateSystem.setButtonStates();
     }
@@ -151,6 +154,9 @@ class ActivitySystem extends CoreSystem {
                 window.evolutionSystem.addDailyActivity("休息了一段时间，心理健康值提升，疾病值可能减少");
             }
         }
+        
+        // 增加事件触发概率
+        this.increaseEventProbability();
         
         this.stateSystem.updateUI();
         this.stateSystem.setButtonStates();
@@ -214,6 +220,9 @@ class ActivitySystem extends CoreSystem {
                 window.evolutionSystem.addDailyActivity("进行了蛰伏，疾病值显著减少，但属性可能下降");
             }
         }
+        
+        // 增加事件触发概率
+        this.increaseEventProbability();
         
         this.stateSystem.updateUI();
         this.stateSystem.setButtonStates();
@@ -305,6 +314,9 @@ class ActivitySystem extends CoreSystem {
             this.stateSystem.setButtonStates();
         }, 100);
         
+        // 增加事件触发概率
+        this.increaseEventProbability();
+        
         this.stateSystem.updateUI();
         this.stateSystem.setButtonStates();
     }
@@ -360,6 +372,9 @@ class ActivitySystem extends CoreSystem {
             this.stateSystem.setButtonStates();
         }, 100);
         
+        // 增加事件触发概率
+        this.increaseEventProbability();
+        
         this.stateSystem.updateUI();
         this.stateSystem.setButtonStates();
     }
@@ -405,6 +420,9 @@ class ActivitySystem extends CoreSystem {
             this.stateSystem.activityState = 'idle';
             this.stateSystem.setButtonStates();
         }, 100);
+        
+        // 增加事件触发概率
+        this.increaseEventProbability();
         
         this.stateSystem.updateUI();
         this.stateSystem.setButtonStates();
@@ -495,6 +513,9 @@ class ActivitySystem extends CoreSystem {
             this.stateSystem.setButtonStates();
         }, 100);
         
+        // 增加事件触发概率
+        this.increaseEventProbability();
+        
         this.stateSystem.updateUI();
         this.stateSystem.setButtonStates();
     }
@@ -550,6 +571,9 @@ class ActivitySystem extends CoreSystem {
             this.stateSystem.activityState = 'idle';
             this.stateSystem.setButtonStates();
         }, 100);
+        
+        // 增加事件触发概率
+        this.increaseEventProbability();
         
         this.stateSystem.updateUI();
         this.stateSystem.setButtonStates();
@@ -609,7 +633,34 @@ class ActivitySystem extends CoreSystem {
             this.stateSystem.setButtonStates();
         }, 100);
         
+        // 增加事件触发概率
+        this.increaseEventProbability();
+        
         this.stateSystem.updateUI();
         this.stateSystem.setButtonStates();
+    }
+    
+    // 增加事件触发概率的方法
+    increaseEventProbability() {
+        if (window.eventSystem) {
+            // 临时增加事件触发概率
+            const originalCommon = window.eventSystem.eventProbabilities.common;
+            const originalRare = window.eventSystem.eventProbabilities.rare;
+            const originalEpic = window.eventSystem.eventProbabilities.epic;
+            
+            // 增加概率：普通事件增加50%，稀有和史诗事件增加25%
+            window.eventSystem.eventProbabilities.common = Math.min(0.15, originalCommon * 1.5);
+            window.eventSystem.eventProbabilities.rare = Math.min(0.04, originalRare * 1.25);
+            window.eventSystem.eventProbabilities.epic = Math.min(0.015, originalEpic * 1.25);
+            
+            // 5秒后恢复原概率
+            setTimeout(() => {
+                if (window.eventSystem) {
+                    window.eventSystem.eventProbabilities.common = originalCommon;
+                    window.eventSystem.eventProbabilities.rare = originalRare;
+                    window.eventSystem.eventProbabilities.epic = originalEpic;
+                }
+            }, 5000);
+        }
     }
 }
