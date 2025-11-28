@@ -32,6 +32,7 @@
         <div class="container">
             <!-- 顶部标题区域 -->
             <header class="header">
+                <div id="game-time-display" style="position: absolute; left: 10px; font-size: 14px;">第1天 00:00</div>
                 <h1>进化模拟器</h1>
             </header>
             
@@ -39,7 +40,7 @@
             <main class="main-content">
                 <!-- 左侧状态栏 -->
                 <section class="left-panel">
-                    <h2>状态栏</h2>
+                    <h2>状态栏 <span id="day-night-hint" style="font-size: 12px; color: #666; margin-left: 10px;"></span></h2>
                     <div class="status-item">
                         <div class="status-label">进化等级 <span id="evolution-level">0</span>/100</div>
                     </div>
@@ -203,6 +204,35 @@
                 <h3>时间控制</h3>
                 <button id="pause-time" class="console-btn">暂停时间</button>
             </div>
+            <!-- 新的事件选择界面 -->
+            <div class="console-section">
+                <h3>事件控制</h3>
+                
+                <!-- 区域选择 -->
+                <div class="area-tabs">
+                    <button class="area-tab-btn active" data-area="sea">海洋事件</button>
+                    <button class="area-tab-btn" data-area="land">陆地事件</button>
+                    <button class="area-tab-btn" data-area="sky">天空事件</button>
+                </div>
+                
+                <div class="event-tabs">
+                    <button class="event-tab-btn active" data-tab="common">普通事件</button>
+                    <button class="event-tab-btn" data-tab="rare">稀有事件</button>
+                    <button class="event-tab-btn" data-tab="epic">史诗事件</button>
+                </div>
+                <div class="event-tab-content">
+                    <div id="common-events" class="event-tab-pane active">
+                        <!-- 普通事件按钮将在这里动态生成 -->
+                    </div>
+                    <div id="rare-events" class="event-tab-pane">
+                        <!-- 稀有事件按钮将在这里动态生成 -->
+                    </div>
+                    <div id="epic-events" class="event-tab-pane">
+                        <!-- 史诗事件按钮将在这里动态生成 -->
+                    </div>
+                </div>
+                <button id="clear-events" class="console-btn">清除所有事件</button>
+            </div>
             <div class="console-section">
                 <h3>进化点数控制</h3>
                 <input type="number" id="set-points-input" placeholder="输入进化点数">
@@ -248,6 +278,12 @@
                     <input type="number" id="set-mental-health-input" placeholder="心理健康值" min="0" max="100">
                     <button id="set-mental-health" class="console-btn">设定</button>
                 </div>
+                <!-- 新增食物储存控制 -->
+                <h4>食物储存</h4>
+                <div class="attribute-control">
+                    <input type="number" id="set-food-storage-input" placeholder="食物储存数量" min="0">
+                    <button id="set-food-storage" class="console-btn">设定</button>
+                </div>
             </div>
             <div class="console-section">
                 <h3>等级需求列表</h3>
@@ -260,6 +296,10 @@
 
     <!-- 按顺序引入JS文件 -->
     <script src="core-system.js"></script>
+    <!-- 事件数据文件 -->
+    <script src="event-data-sea.js"></script>
+    <script src="event-data-land.js"></script>
+    <script src="event-data-sky.js"></script>
     <script src="event-system.js"></script>
     <script src="state-system.js"></script>
     <script src="activity-system.js"></script>
