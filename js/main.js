@@ -2,6 +2,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM加载完成，开始初始化系统");
     
+    // 创建加载界面
+    createLoadingScreen();
+    
     try {
         // 首先隐藏所有页面，防止显示错误页面
         const pages = document.querySelectorAll('.page');
@@ -9,43 +12,166 @@ document.addEventListener('DOMContentLoaded', function() {
             page.style.display = 'none';
         });
         
-        // 初始化事件系统
-        const eventSystem = new EventSystem();
-        window.eventSystem = eventSystem;
+        // 检查是否有缓存数据
+        const hasCache = checkForCache();
         
-        // 初始化状态系统
-        const stateSystem = new StateSystem(eventSystem);
-        window.stateSystem = stateSystem;
-        
-        // 初始化活动系统
-        const activitySystem = new ActivitySystem(stateSystem, eventSystem);
-        window.activitySystem = activitySystem;
-        
-        // 初始化进化系统
-        const evolutionSystem = new EvolutionSystem(stateSystem, eventSystem);
-        window.evolutionSystem = evolutionSystem;
-        
-        // 初始化进化路线系统（最后初始化，它会控制页面显示）
-        const evolutionRouteSystem = new EvolutionRouteSystem(stateSystem, eventSystem, evolutionSystem);
-        window.evolutionRouteSystem = evolutionRouteSystem;
-        
-        // 设置活动按钮事件监听器
-        setupActivityListeners(activitySystem);
-        
-        // 初始化页面切换和控制台
-        initPageAndConsole(evolutionSystem, stateSystem, eventSystem);
-        
-        console.log("所有系统初始化完成");
+        if (hasCache) {
+            console.log("检测到缓存数据，直接加载游戏");
+            loadGameDirectly();
+        } else {
+            console.log("未检测到缓存数据，显示开始界面");
+            // 初始化事件系统
+            const eventSystem = new EventSystem();
+            window.eventSystem = eventSystem;
+            
+            // 初始化状态系统
+            const stateSystem = new StateSystem(eventSystem);
+            window.stateSystem = stateSystem;
+            
+            // 初始化活动系统
+            const activitySystem = new ActivitySystem(stateSystem, eventSystem);
+            window.activitySystem = activitySystem;
+            
+            // 初始化进化系统
+            const evolutionSystem = new EvolutionSystem(stateSystem, eventSystem);
+            window.evolutionSystem = evolutionSystem;
+            
+            // 初始化进化路线系统
+            const evolutionRouteSystem = new EvolutionRouteSystem(stateSystem, eventSystem, evolutionSystem);
+            window.evolutionRouteSystem = evolutionRouteSystem;
+            
+            // 设置活动按钮事件监听器
+            setupActivityListeners(activitySystem);
+            
+            // 初始化页面切换和控制台
+            initPageAndConsole(evolutionSystem, stateSystem, eventSystem);
+            
+            console.log("所有系统初始化完成");
+            
+            // 显示开始页面
+            showPage('start');
+        }
         
     } catch (error) {
         console.error("初始化过程中出现错误:", error);
-        // 如果出现错误，至少显示开始页面
-        const startPage = document.getElementById('start');
-        if (startPage) {
-            startPage.style.display = 'flex';
-        }
+        // 如果出现错误，显示开始页面
+        showPage('start');
+    } finally {
+        // 隐藏加载界面
+        hideLoadingScreen();
     }
 });
+
+// 创建加载界面
+function createLoadingScreen() {
+    const loadingScreen = document.createElement('div');
+    loadingScreen.id = 'loading-screen';
+    loadingScreen.innerHTML = `
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">加载中...</div>
+        </div>
+    `;
+    
+    // 确保样式已经加载
+    document.head.appendChild(loadingScreen);
+    
+    // 添加一些调试信息
+    console.log("创建加载界面");
+    
+    // 测试样式是否生效
+    setTimeout(() => {
+        const spinner = document.querySelector('.loading-spinner');
+        if (spinner) {
+            console.log("加载圆环元素存在:", spinner);
+            console.log("加载圆环样式:", window.getComputedStyle(spinner));
+        } else {
+            console.error("加载圆环元素未找到");
+        }
+    }, 100);
+}
+
+// 隐藏加载界面
+function hideLoadingScreen() {
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+        loadingScreen.style.display = 'none';
+    }
+}
+
+// 检查是否有缓存数据
+function checkForCache() {
+    try {
+        // 检查状态系统的缓存
+        const stateCache = localStorage.getItem("evolution_simulator_cache");
+        if (stateCache) {
+            const parsedData = JSON.parse(stateCache);
+            if (parsedData.version === "1.0" && parsedData.stateData) {
+                return true;
+            }
+        }
+        
+        // 检查自动存档
+        const autoSave = localStorage.getItem("evolution_simulator_auto_save");
+        if (autoSave) {
+            const parsedData = JSON.parse(autoSave);
+            if (parsedData.version === "1.0.0") {
+                return true;
+            }
+        }
+        
+        return false;
+    } catch (error) {
+        console.error("检查缓存时出错:", error);
+        return false;
+    }
+}
+
+// 直接加载游戏（有缓存时）
+function loadGameDirectly() {
+    // 初始化事件系统
+    const eventSystem = new EventSystem();
+    window.eventSystem = eventSystem;
+    
+    // 初始化状态系统（会自动加载缓存）
+    const stateSystem = new StateSystem(eventSystem);
+    window.stateSystem = stateSystem;
+    
+    // 初始化活动系统
+    const activitySystem = new ActivitySystem(stateSystem, eventSystem);
+    window.activitySystem = activitySystem;
+    
+    // 初始化进化系统
+    const evolutionSystem = new EvolutionSystem(stateSystem, eventSystem);
+    window.evolutionSystem = evolutionSystem;
+    
+    // 初始化进化路线系统
+    const evolutionRouteSystem = new EvolutionRouteSystem(stateSystem, eventSystem, evolutionSystem);
+    window.evolutionRouteSystem = evolutionRouteSystem;
+    
+    // 设置活动按钮事件监听器
+    setupActivityListeners(activitySystem);
+    
+    // 初始化页面切换和控制台
+    initPageAndConsole(evolutionSystem, stateSystem, eventSystem);
+    
+    // 直接显示进行中页面
+    showPage('ongoing');
+    
+    // 标记游戏已开始
+    if (window.evolutionRouteSystem) {
+        window.evolutionRouteSystem.gameStarted = true;
+        // 更新可用按钮
+        window.evolutionRouteSystem.updateAvailableButtons();
+    }
+    
+    // 添加加载提示
+    if (window.evolutionSystem) {
+        window.evolutionSystem.addKeyEvent("从缓存恢复游戏进度");
+    }
+    
+    console.log("游戏从缓存直接加载完成");
+}
 
 // 设置活动按钮事件监听器
 function setupActivityListeners(activitySystem) {
