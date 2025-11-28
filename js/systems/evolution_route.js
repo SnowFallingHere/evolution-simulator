@@ -18,8 +18,9 @@ class EvolutionRouteSystem extends CoreSystem {
         console.log("初始化进化路线系统");
         this.createStartPage();
         this.setupEventListeners();
-        // 确保开始页面显示
-        this.showPage('start');
+        
+        // 不再默认显示开始页面，由main.js根据缓存情况决定
+        console.log("进化路线系统初始化完成，等待主程序决定显示哪个页面");
     }
     
     createStartPage() {
@@ -94,6 +95,25 @@ class EvolutionRouteSystem extends CoreSystem {
         }
         
         console.log("游戏开始完成");
+    }
+    
+    // 直接从缓存加载游戏
+    loadFromCache() {
+        console.log("从缓存加载游戏状态");
+        this.gameStarted = true;
+        
+        // 更新可用按钮
+        this.updateAvailableButtons();
+        
+        // 更新属性显示状态
+        this.updateAttributeDisplay(this.evolutionSystem.getEvolutionLevel());
+        
+        // 添加加载提示
+        if (window.evolutionSystem) {
+            window.evolutionSystem.addKeyEvent("游戏进度已从缓存恢复");
+        }
+        
+        console.log("从缓存加载完成");
     }
     
     updateAvailableButtons() {
