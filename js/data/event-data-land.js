@@ -1,1 +1,1 @@
-const EVENT_DATA_LAND = []
+const EVENT_DATA_LAND = [];
