@@ -1,5 +1,5 @@
 // 主程序 - 初始化所有系统
-document。addEventListener('DOMContentLoaded', function() {
+document。addEventListener('DOMContentLoaded'， function() {
     console.log("DOM加载完成，开始初始化系统");
     
     try {
@@ -592,4 +592,5 @@ function makeConsoleDraggable(element) {
         document.onmousemove = null;
     }
 }
+
 
