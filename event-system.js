@@ -4,17 +4,26 @@ class EventSystem extends CoreSystem {
         super();
         this.events = [];
         this.activeEvents = new Map();
-        this.eventProbabilities = {
+        
+        // 基础事件概率
+        this.baseEventProbabilities = {
             common: 0.06,    // 略微降低概率
             rare: 0.025,     // 保持稀有事件较低概率
             epic: 0.008      // 史诗事件概率很低
         };
+        
+        // 当前事件概率（可被临时修改）
+        this.eventProbabilities = {...this.baseEventProbabilities};
         
         this.eventCooldown = 0;
         this.minCooldownBetweenEvents = 15; // 增加冷却时间
         
         // 当前选择的区域
         this.currentArea = "sea"; // 默认海洋区域
+        
+        // 概率增强状态
+        this.probabilityBoostActive = false;
+        this.probabilityBoostTimer = null;
         
         this.init();
     }
@@ -371,6 +380,46 @@ class EventSystem extends CoreSystem {
     // 获取当前区域
     getCurrentArea() {
         return this.currentArea;
+    }
+    
+    // 增加事件触发概率
+    increaseEventProbability() {
+        // 如果已经有概率增强在生效，先清除之前的定时器
+        if (this.probabilityBoostTimer) {
+            clearTimeout(this.probabilityBoostTimer);
+            this.probabilityBoostTimer = null;
+        }
+        
+        // 标记概率增强状态
+        this.probabilityBoostActive = true;
+        
+        // 增加概率：普通事件增加50%，稀有和史诗事件增加25%
+        this.eventProbabilities.common = Math.min(0.15, this.baseEventProbabilities.common * 1.5);
+        this.eventProbabilities.rare = Math.min(0.04, this.baseEventProbabilities.rare * 1.25);
+        this.eventProbabilities.epic = Math.min(0.015, this.baseEventProbabilities.epic * 1.25);
+        
+        console.log(`事件概率增强激活: 普通=${this.eventProbabilities.common}, 稀有=${this.eventProbabilities.rare}, 史诗=${this.eventProbabilities.epic}`);
+        
+        // 5秒后恢复基础概率
+        this.probabilityBoostTimer = setTimeout(() => {
+            this.resetEventProbability();
+        }, 5000);
+    }
+    
+    // 重置事件概率到基础值
+    resetEventProbability() {
+        this.eventProbabilities.common = this.baseEventProbabilities.common;
+        this.eventProbabilities.rare = this.baseEventProbabilities.rare;
+        this.eventProbabilities.epic = this.baseEventProbabilities.epic;
+        this.probabilityBoostActive = false;
+        this.probabilityBoostTimer = null;
+        
+        console.log("事件概率已重置为基础值");
+    }
+    
+    // 获取当前概率增强状态
+    isProbabilityBoostActive() {
+        return this.probabilityBoostActive;
     }
     
     // 结束所有活跃事件
