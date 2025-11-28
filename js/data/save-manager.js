@@ -348,14 +348,23 @@ class SaveManager extends CoreSystem {
     // 显示移动端菜单
     showMobileMenu() {
         const mobileMenu = document.querySelector('.save-mobile-menu');
-        if (mobileMenu) {
+        const themeToggle = document.getElementById('theme-toggle');
+    
+        if (mobileMenu && themeToggle) {
+            // 获取主题按钮的位置
+            const themeRect = themeToggle.getBoundingClientRect();
+        
+            // 设置菜单位置在主题按钮下方
+            mobileMenu.style.top = `${themeRect.bottom + 5}px`;
+            mobileMenu.style.right = `${window.innerWidth - themeRect.right}px`;
+        
             mobileMenu.style.display = 'flex';
             this.menuVisible = true;
-            
-            // 添加显示动画
+        
+        // 添加显示动画
             mobileMenu.style.opacity = '0';
             mobileMenu.style.transform = 'translateY(-10px)';
-            
+        
             setTimeout(() => {
                 mobileMenu.style.transition = 'all 0.3s ease';
                 mobileMenu.style.opacity = '1';
