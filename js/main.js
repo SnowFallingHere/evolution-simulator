@@ -545,32 +545,32 @@ function initPageAndConsole(evolutionSystem, stateSystem, eventSystem) {
 function showPage(pageId) {
     console.log("全局showPage被调用:", pageId);
     const pages = document.querySelectorAll('.page');
-    pages。forEach(page => {
+    pages.forEach(page => {
         page.style.display = 'none';
     });
     
-    const targetPage = document。getElementById(pageId);
+    const targetPage = document.getElementById(pageId);
     if (targetPage) {
         targetPage.style.display = 'flex';
         console.log("成功显示页面:", pageId);
     } else {
-        console.error("页面未找到:"， pageId);
+        console.error("页面未找到:", pageId);
     }
 }
 
 // 使控制台可拖拽的函数
 function makeConsoleDraggable(element) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    const header = element。querySelector('.console-header');
+    const header = element.querySelector('.console-header');
     
     if (!header) return;
     
-    header。onmousedown = dragMouseDown;
+    header.onmousedown = dragMouseDown;
     
     function dragMouseDown(e) {
         e = e || window.event;
-        e。preventDefault();
-        pos3 = e。clientX;
+        e.preventDefault();
+        pos3 = e.clientX;
         pos4 = e.clientY;
         document.onmouseup = closeDragElement;
         document.onmousemove = elementDrag;
@@ -595,3 +595,11 @@ function makeConsoleDraggable(element) {
 
 // 设置全局函数
 window.showPage = showPage;
+
+// 全局错误处理
+window.addEventListener('error', function(e) {
+    console.error('全局错误:', e.error);
+    console.error('文件名:', e.filename);
+    console.error('行号:', e.lineno);
+    console.error('列号:', e.colno);
+});
