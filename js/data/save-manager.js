@@ -40,7 +40,7 @@ class SaveManager extends CoreSystem {
         buttonContainer.style.cssText = `
             /* 桌面端样式：保持原有定位 */
             position: absolute;
-            right: 70px;
+            right: 110px; /* 从70px改为110px，为三个按钮留出空间 */
             top: 2.5%;
             transform: translateY(-50%);
             display: flex;
@@ -49,6 +49,28 @@ class SaveManager extends CoreSystem {
             
             /* 基础flex属性 */
             flex-wrap: nowrap;
+            align-items: center;
+            justify-content: center;
+        `;
+        
+        // 新存档按钮
+        const newSaveButton = document.createElement('button');
+        newSaveButton.id = 'new-save';
+        newSaveButton.className = 'save-button';
+        newSaveButton.innerHTML = '🆕';
+        newSaveButton.title = '新存档';
+        newSaveButton.style.cssText = `
+            background: var(--button-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-color);
+            transition: all 0.2s;
+            width: 32px;
+            height: 24px;
+            display: flex;
             align-items: center;
             justify-content: center;
         `;
@@ -107,7 +129,7 @@ class SaveManager extends CoreSystem {
         `;
         
         // 按钮交互效果
-        const buttons = [exportButton, importButton];
+        const buttons = [newSaveButton, exportButton, importButton];
         buttons.forEach(button => {
             button.addEventListener('mouseenter', () => {
                 button.style.backgroundColor = 'var(--button-hover)';
@@ -126,6 +148,7 @@ class SaveManager extends CoreSystem {
         });
         
         // 添加到页面
+        buttonContainer.appendChild(newSaveButton);
         buttonContainer.appendChild(importButton);
         buttonContainer.appendChild(exportButton);
         timeDisplay.parentNode.appendChild(buttonContainer);
@@ -136,9 +159,16 @@ class SaveManager extends CoreSystem {
     
     // 设置事件监听器
     setupEventListeners() {
+        const newSaveButton = document.getElementById('new-save');
         const importButton = document.getElementById('import-save');
         const exportButton = document.getElementById('export-save');
         const fileInput = document.getElementById('save-file-input');
+        
+        if (newSaveButton) {
+            newSaveButton.addEventListener('click', () => {
+                this.createNewSave();
+            });
+        }
         
         if (exportButton) {
             exportButton.addEventListener('click', () => {
@@ -154,6 +184,39 @@ class SaveManager extends CoreSystem {
             fileInput.addEventListener('change', (event) => {
                 this.importSave(event);
             });
+        }
+    }
+    
+    // 创建新存档
+    createNewSave() {
+        if (confirm("确定要创建新存档吗？当前进度将会丢失！")) {
+            // 清除所有缓存数据
+            this.clearAllStorage();
+            
+            // 重新加载页面
+            location.reload();
+        }
+    }
+    
+    // 清除所有存储数据
+    clearAllStorage() {
+        try {
+            // 清除状态系统缓存
+            localStorage.removeItem("evolution_simulator_cache");
+            
+            // 清除自动存档
+            localStorage.removeItem("evolution_simulator_auto_save");
+            
+            // 清除主存档
+            localStorage.removeItem(this.STORAGE_KEY);
+            
+            console.log("所有存档数据已清除");
+            
+            if (window.evolutionSystem) {
+                window.evolutionSystem.addKeyEvent("已清除所有存档数据，开始新游戏");
+            }
+        } catch (error) {
+            console.error("清除存档数据失败:", error);
         }
     }
     
@@ -408,19 +471,19 @@ style.textContent = `
         .save-buttons-container {
             position: fixed !important; /* 固定在顶部抬头区域 */
             top: 7px !important; /* 贴合顶部 */
-            right: 75px !important; /* 基础右侧间距35px（满足最小要求） */
+            right: 85px !important; /* 从75px调整为85px，为三个按钮留出空间 */
             left: auto !important;
             transform: translateX(0) translateY(0) !important; /* 先取消偏移 */
             /* 关键：通过max-width和margin实现"越小越居中" */
-            max-width: calc(100% - 150px) !important; /* 左右各留75px，限制最大宽度 */
+            max-width: calc(100% - 170px) !important; /* 左右各留85px，限制最大宽度 */
             margin: 0 auto !important; /* 水平居中 */
-            gap: 8px !important;
+            gap: 6px !important; /* 从8px调整为6px */
         }
         
         .save-button {
-            width: 32px !important;
-            height: 26px !important;
-            font-size: 14px !important;
+            width: 30px !important; /* 从32px调整为30px */
+            height: 24px !important; /* 从26px调整为24px */
+            font-size: 13px !important; /* 从14px调整为13px */
         }
     }
     
@@ -428,17 +491,17 @@ style.textContent = `
     @media (max-width: 480px) {
         .save-buttons-container {
             top: 8px !important;
-            right: 75px !important; /* 保持≥35px */
-            left: 75px !important; /* 左侧也留35px，强制居中 */
+            right: 85px !important; /* 从75px调整为85px */
+            left: 85px !important; /* 从75px调整为85px */
             max-width: 100% !important;
             justify-content: center !important; /* 容器内元素居中 */
-            gap: 6px !important;
+            gap: 4px !important; /* 从6px调整为4px */
         }
         
         .save-button {
-            width: 30px !important;
-            height: 24px !important;
-            font-size: 13px !important;
+            width: 28px !important; /* 从30px调整为28px */
+            height: 22px !important; /* 从24px调整为22px */
+            font-size: 12px !important; /* 从13px调整为12px */
         }
     }
     
@@ -446,15 +509,15 @@ style.textContent = `
     @media (max-width: 320px) {
         .save-buttons-container {
             top: 6px !important;
-            right: 75px !important; /* 强制保留35px右侧间距 */
-            left: 75px !important; /* 强制保留35px左侧间距 */
-            gap: 5px !important;
+            right: 85px !important; /* 从75px调整为85px */
+            left: 85px !important; /* 从75px调整为85px */
+            gap: 3px !important; /* 从5px调整为3px */
         }
         
         .save-button {
-            width: 28px !important;
-            height: 22px !important;
-            font-size: 12px !important;
+            width: 26px !important; /* 从28px调整为26px */
+            height: 20px !important; /* 从22px调整为20px */
+            font-size: 11px !important; /* 从12px调整为11px */
         }
     }
     
