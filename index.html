@@ -294,36 +294,42 @@
 
     <!-- 按顺序引入JS文件 -->
     <!-- 1. 核心系统 -->
-    <script src="js/core/core-system.js"></script>
-    <script src="js/core/cooling-btn.js"></script>
+    <script src="js/core/CoreSystem.js"></script>
+    <script src="js/core/components/CoolingButton.js"></script>
     
-    <!-- 2. 事件数据文件 -->
-    <script src="js/data/event-data-sea.js"></script>
-    <script src="js/data/event-data-land.js"></script>
-    <script src="js/data/event-data-sky.js"></script>
-    <script src="js/data/save-manager.js"></script>
+    <!-- 2. 事件相关文件 -->
+    <script src="js/events/data/EventDataSea.js"></script>
+    <script src="js/events/data/EventDataLand.js"></script>
+    <script src="js/events/data/EventDataSky.js"></script>
+    <script src="js/events/EventSystem.js"></script>
     
     <!-- 3. 游戏系统文件 -->
-    <script src="js/systems/event-system.js"></script>
-    <script src="js/systems/state-system.js"></script>
-    <script src="js/systems/activity-system.js"></script>
-    <script src="js/systems/evolution-system.js"></script>
-    <script src="js/systems/evolution_route.js"></script>
+    <script src="js/systems/StateSystem.js"></script>
+    <script src="js/systems/ActivitySystem.js"></script>
+    <script src="js/systems/EvolutionSystem.js"></script>
+    <script src="js/systems/EvolutionRoute.js"></script>
     
-    <!-- 4. 主程序模块（按依赖顺序） -->
-    <script src="js/main/error-handler.js"></script>
-    <script src="js/main/device-detector.js"></script>
-    <script src="js/main/performance.js"></script>
-    <script src="js/main/state-sync.js"></script>
-    <script src="js/main/loading.js"></script>
-    <script src="js/main/cache-manager.js"></script>
-    <script src="js/main/init.js"></script>
-    <script src="js/main/activity-listeners.js"></script>
-    <script src="js/main/console-features.js"></script>
-    <script src="js/main/page-console.js"></script>
-    <script src="js/main/utils.js"></script>
+    <!-- 4. 数据管理 -->
+    <script src="js/data/SaveManager.js"></script>
     
-    <!-- 5. 主程序入口 -->
+    <!-- 5. 工具和辅助类 -->
+    <script src="js/utils/ErrorHandler.js"></script>
+    <script src="js/utils/DeviceDetector.js"></script>
+    <script src="js/utils/UtilityFunctions.js"></script>
+    <script src="js/utils/monitors/PerformanceMonitor.js"></script>
+    <script src="js/utils/handlers/ActivityListeners.js"></script>
+    
+    <!-- 6. UI相关 -->
+    <script src="js/ui/PageConsole.js"></script>
+    <script src="js/ui/ConsoleFeatures.js"></script>
+    
+    <!-- 7. 初始化和启动 -->
+    <script src="js/bootstrap/LoadingManager.js"></script>
+    <script src="js/bootstrap/CacheManager.js"></script>
+    <script src="js/bootstrap/StateSync.js"></script>
+    <script src="js/bootstrap/GameInitializer.js"></script>
+    
+    <!-- 8. 主程序入口 -->
     <script src="js/main.js"></script>
 </body>
 </html>

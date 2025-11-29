@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>进化模拟器 - 重构性能测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        
+        .test-button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: transform 0.2s;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .test-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 10px;
+            transition: width 0.3s;
+            width: 0%;
+        }
+        
+        .status {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 5px;
+            display: inline-block;
+        }
+        
+        .status.pending { background: #ffc107; color: #000; }
+        .status.running { background: #17a2b8; color: #fff; }
+        .status.completed { background: #28a745; color: #fff; }
+        .status.failed { background: #dc3545; color: #fff; }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .metric .value {
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 进化模拟器重构性能测试</h1>
+        
+        <div class="test-section">
+            <h2>📊 性能测试套件</h2>
+            <p>此页面用于验证重构后系统的性能表现，确保模块化架构不会引入性能退化。</p>
+            
+            <button class="test-button" onclick="runAllTests()">🎯 运行完整性能测试</button>
+            <button class="test-button" onclick="runMemoryTest()">🧠 运行内存测试</button>
+            <button class="test-button" onclick="clearLog()">🗑️ 清空日志</button>
+            
+            <div class="progress-bar">
+                <div class="progress" id="progressBar"></div>
+            </div>
+            
+            <div id="testStatus">
+                <span class="status pending">待开始</span>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔧 单项测试</h2>
+            <button class="test-button" onclick="testInitialization()">系统初始化测试</button>
+            <button class="test-button" onclick="testEvents()">事件处理测试</button>
+            <button class="test-button" onclick="testState()">状态更新测试</button>
+            <button class="test-button" onclick="testCache()">缓存操作测试</button>
+            <button class="test-button" onclick="testUI()">界面渲染测试</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📈 测试结果</h2>
+            <div id="results" class="results">
+                <p>测试结果将在此显示...</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📝 测试日志</h2>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script src="性能测试.js"></script>
+    <script>
+        // 日志管理
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            
+            let color = '#d4d4d4';
+            if (type === 'success') color = '#4CAF50';
+            if (type === 'error') color = '#F44336';
+            if (type === 'warning') color = '#FF9800';
+            if (type === 'info') color = '#2196F3';
+            
+            logEntry.innerHTML = `<span style="color: #888;">[${timestamp}]</span> <span style="color: ${color};">${message}</span>`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // 更新进度条
+        function updateProgress(percent) {
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percent + '%';
+        }
+        
+        // 更新测试状态
+        function updateStatus(status, message = '') {
+            const statusElement = document.getElementById('testStatus');
+            statusElement.innerHTML = `<span class="status ${status}">${message || status}</span>`;
+        }
+        
+        // 清空日志
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            log('日志已清空', 'info');
+        }
+        
+        // 显示测试结果
+        function showResults(results) {
+            const resultsElement = document.getElementById('results');
+            let html = '<h3>性能测试结果汇总</h3>';
+            
+            for (const [testName, result] of Object.entries(results)) {
+                html += `
+                    <div class="metric">
+                        <span>${testName}</span>
+                        <span class="value">${result.averageTime.toFixed(2)}ms</span>
+                    </div>
+                `;
+            }
+            
+            resultsElement.innerHTML = html;
+        }
+        
+        // 运行完整性能测试
+        async function runAllTests() {
+            log('开始执行完整性能测试套件...', 'info');
+            updateStatus('running', '测试进行中');
+            
+            try {
+                updateProgress(10);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const tester = new PerformanceTester();
+                const results = await tester.runAllTests();
+                
+                updateProgress(100);
+                updateStatus('completed', '测试完成');
+                showResults(results);
+                log('完整性能测试完成！', 'success');
+                
+            } catch (error) {
+                updateStatus('failed', '测试失败');
+                log('性能测试失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 运行内存测试
+        async function runMemoryTest() {
+            log('开始内存使用监控...', 'info');
+            updateStatus('running', '内存测试中');
+            
+            try {
+                const memoryMonitor = new MemoryMonitor();
+                memoryMonitor.startMonitoring();
+                
+                // 模拟一些操作来观察内存变化
+                for (let i = 0; i < 10; i++) {
+                    updateProgress(i * 10);
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    memoryMonitor.takeSample();
+                }
+                
+                memoryMonitor.stopMonitoring();
+                updateProgress(100);
+                updateStatus('completed', '内存测试完成');
+                log('内存测试完成！', 'success');
+                
+            } catch (error) {
+                updateStatus('failed', '内存测试失败');
+                log('内存测试失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 单项测试函数
+        async function testInitialization() {
+            log('开始系统初始化性能测试...', 'info');
+            const tester = new PerformanceTester();
+            await tester.testSystemInitialization();
+            log('系统初始化测试完成', 'success');
+        }
+        
+        async function testEvents() {
+            log('开始事件处理性能测试...', 'info');
+            const tester = new PerformanceTester();
+            await tester.testEventProcessing();
+            log('事件处理测试完成', 'success');
+        }
+        
+        async function testState() {
+            log('开始状态更新性能测试...', 'info');
+            const tester = new PerformanceTester();
+            await tester.testStateUpdates();
+            log('状态更新测试完成', 'success');
+        }
+        
+        async function testCache() {
+            log('开始缓存操作性能测试...', 'info');
+            const tester = new PerformanceTester();
+            await tester.testCacheOperations();
+            log('缓存操作测试完成', 'success');
+        }
+        
+        async function testUI() {
+            log('开始界面渲染性能测试...', 'info');
+            const tester = new PerformanceTester();
+            await tester.testUIRendering();
+            log('界面渲染测试完成', 'success');
+        }
+        
+        // 初始化日志
+        log('性能测试页面已加载完成', 'success');
+        log('点击上方按钮开始性能测试', 'info');
+    </script>
+</body>
+</html>
