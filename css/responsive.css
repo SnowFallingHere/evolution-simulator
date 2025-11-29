@@ -186,7 +186,7 @@
     
     /* 移动端存档菜单位置调整 */
     .save-mobile-menu {
-        top: 70px !important; /* 从60px调整为70px，避免与主题按钮重叠 */
+        top: 250px !important; /* 从60px调整为70px，避免与主题按钮重叠 */
         right: 15px !important; /* 从10px调整为15px，与主题按钮对齐 */
     }
 }
@@ -295,7 +295,7 @@
     
     /* 小屏幕存档菜单位置调整 */
     .save-mobile-menu {
-        top: 65px !important;
+        top: 250px !important;
         right: 12px !important;
     }
 }

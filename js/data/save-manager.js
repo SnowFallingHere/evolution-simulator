@@ -144,9 +144,8 @@ class SaveManager extends CoreSystem {
         console.log("桌面端存档按钮创建完成");
     }
     
-    // 移动端：创建独立的触发元素（关键修改）
+    // 移动端：创建独立的触发元素（修改为点击触发）
     createMobileSaveTrigger() {
-        // 创建触发存档菜单的元素（可以是页面空白区域或独立按钮）
         const trigger = document.createElement('div');
         trigger.className = 'save-menu-trigger';
         trigger.id = 'save-menu-trigger';
@@ -154,8 +153,8 @@ class SaveManager extends CoreSystem {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             background: var(--button-bg);
             border: 2px solid var(--border-color);
             border-radius: 50%;
@@ -164,20 +163,20 @@ class SaveManager extends CoreSystem {
             justify-content: center;
             cursor: pointer;
             z-index: 998;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            font-size: 20px;
-            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-size: 24px;
+            transition: all 0.3s ease;
         `;
         trigger.innerHTML = '💾';
-        trigger.title = '长按3秒显示存档菜单';
+        trigger.title = '点击显示存档菜单';
         
         document.body.appendChild(trigger);
         this.saveTriggerElement = trigger;
         
-        console.log("移动端存档触发元素创建完成");
+        console.log("移动端存档触发按钮创建完成");
     }
     
-    // 移动端：创建存档菜单
+    // 移动端：创建存档菜单（优化样式）
     createMobileSaveMenu() {
         const mobileMenu = document.createElement('div');
         mobileMenu.className = 'save-mobile-menu';
@@ -186,23 +185,38 @@ class SaveManager extends CoreSystem {
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: var(--button-bg);
+            background: var(--panel-bg);
             border: 2px solid var(--border-color);
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            border-radius: 16px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.4);
             z-index: 1001;
             display: none;
             flex-direction: column;
-            padding: 12px;
-            gap: 8px;
-            min-width: 160px;
+            padding: 16px;
+            gap: 12px;
+            min-width: 200px;
+            backdrop-filter: blur(10px);
         `;
+        
+        // 创建菜单标题
+        const menuHeader = document.createElement('div');
+        menuHeader.style.cssText = `
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            color: var(--text-color);
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        `;
+        menuHeader.textContent = '存档管理';
+        mobileMenu.appendChild(menuHeader);
         
         // 创建三个菜单项
         const menuItems = [
-            { id: 'mobile-new-save', icon: '🆕', text: '新游戏' },
-            { id: 'mobile-import-save', icon: '📁', text: '导入存档' },
-            { id: 'mobile-export-save', icon: '💾', text: '导出存档' }
+            { id: 'mobile-new-save', icon: '🆕', text: '新游戏', color: '#ff6b6b' },
+            { id: 'mobile-import-save', icon: '📁', text: '导入存档', color: '#4ecdc4' },
+            { id: 'mobile-export-save', icon: '💾', text: '导出存档', color: '#45b7d1' }
         ];
         
         menuItems.forEach(item => {
@@ -212,28 +226,59 @@ class SaveManager extends CoreSystem {
             menuItem.style.cssText = `
                 display: flex;
                 align-items: center;
-                gap: 10px;
-                padding: 10px 15px;
-                border-radius: 8px;
+                gap: 12px;
+                padding: 14px 16px;
+                border-radius: 12px;
                 cursor: pointer;
-                transition: background-color 0.2s;
-                font-size: 14px;
+                transition: all 0.3s ease;
+                font-size: 16px;
                 color: var(--text-color);
+                background: var(--button-bg);
+                border: 1px solid var(--border-color);
             `;
             menuItem.innerHTML = `
-                <span style="font-size: 18px;">${item.icon}</span>
-                <span>${item.text}</span>
+                <span style="font-size: 20px;">${item.icon}</span>
+                <span style="flex: 1;">${item.text}</span>
             `;
             
+            // 悬停效果
             menuItem.addEventListener('mouseenter', () => {
                 menuItem.style.backgroundColor = 'var(--button-hover)';
+                menuItem.style.transform = 'translateX(5px)';
             });
             menuItem.addEventListener('mouseleave', () => {
-                menuItem.style.backgroundColor = 'transparent';
+                menuItem.style.backgroundColor = 'var(--button-bg)';
+                menuItem.style.transform = 'translateX(0)';
+            });
+            
+            // 点击效果
+            menuItem.addEventListener('mousedown', () => {
+                menuItem.style.transform = 'scale(0.95)';
+            });
+            menuItem.addEventListener('mouseup', () => {
+                menuItem.style.transform = 'scale(1)';
             });
             
             mobileMenu.appendChild(menuItem);
         });
+        
+        // 创建关闭按钮
+        const closeButton = document.createElement('div');
+        closeButton.style.cssText = `
+            text-align: center;
+            margin-top: 8px;
+            padding: 10px;
+            color: var(--text-color);
+            opacity: 0.7;
+            font-size: 14px;
+            cursor: pointer;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+        `;
+        closeButton.textContent = '点击外部关闭';
+        closeButton.addEventListener('click', () => this.hideMobileMenu());
+        
+        mobileMenu.appendChild(closeButton);
         
         // 隐藏的文件输入元素
         const fileInput = document.createElement('input');
@@ -313,7 +358,7 @@ class SaveManager extends CoreSystem {
         });
     }
     
-    // 移动端事件监听 - 关键修改：使用独立触发元素
+    // 移动端事件监听 - 修改为点击触发
     setupMobileEventListeners() {
         const fileInput = document.getElementById('save-file-input');
         const saveTrigger = this.saveTriggerElement;
@@ -324,58 +369,41 @@ class SaveManager extends CoreSystem {
             return;
         }
         
-        console.log("设置移动端存档事件监听器");
+        console.log("设置移动端存档事件监听器 - 点击触发");
         
-        // 关键修改：不再监听 theme-toggle，改为监听独立的触发元素
-        // 长按触发存档菜单
+        // 关键修改：改为点击触发，移除所有长按逻辑
+        saveTrigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (this.menuVisible) {
+                this.hideMobileMenu();
+            } else {
+                this.showMobileMenu();
+            }
+            
+            // 点击动画
+            saveTrigger.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                saveTrigger.style.transform = 'scale(1)';
+            }, 150);
+        });
+        
+        // 触摸事件（移动端）
         saveTrigger.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            this.longPressTriggered = false;
-            
-            this.longPressTimer = setTimeout(() => {
-                this.longPressTriggered = true;
-                this.showMobileMenu();
-                console.log("移动端长按3秒触发，显示存档菜单");
-            }, 3000);
-            
-            // 添加视觉反馈
             saveTrigger.style.transform = 'scale(0.9)';
-            saveTrigger.style.opacity = '0.7';
         });
         
         saveTrigger.addEventListener('touchend', (e) => {
             e.preventDefault();
-            if (this.longPressTimer) {
-                clearTimeout(this.longPressTimer);
-                this.longPressTimer = null;
-            }
-            
-            // 恢复视觉状态
             saveTrigger.style.transform = 'scale(1)';
-            saveTrigger.style.opacity = '1';
             
-            // 如果不是长按，可以添加单击反馈（可选）
-            if (!this.longPressTriggered) {
-                // 添加一个简短的单击动画
-                saveTrigger.style.transform = 'scale(1.1)';
-                setTimeout(() => {
-                    saveTrigger.style.transform = 'scale(1)';
-                }, 100);
+            if (this.menuVisible) {
+                this.hideMobileMenu();
+            } else {
+                this.showMobileMenu();
             }
-            
-            this.longPressTriggered = false;
-        });
-        
-        saveTrigger.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            // 移动时取消长按
-            if (this.longPressTimer) {
-                clearTimeout(this.longPressTimer);
-                this.longPressTimer = null;
-                this.longPressTriggered = false;
-            }
-            saveTrigger.style.transform = 'scale(1)';
-            saveTrigger.style.opacity = '1';
         });
         
         // 点击菜单项
@@ -409,9 +437,27 @@ class SaveManager extends CoreSystem {
         }
         
         // 点击菜单外部关闭菜单
+        document.addEventListener('click', (e) => {
+            const mobileMenu = document.querySelector('.save-mobile-menu');
+            const saveTrigger = document.getElementById('save-menu-trigger');
+            
+            if (this.menuVisible && 
+                mobileMenu && 
+                !mobileMenu.contains(e.target) && 
+                e.target !== saveTrigger) {
+                this.hideMobileMenu();
+            }
+        });
+        
+        // 触摸事件的外部关闭
         document.addEventListener('touchstart', (e) => {
             const mobileMenu = document.querySelector('.save-mobile-menu');
-            if (this.menuVisible && mobileMenu && !mobileMenu.contains(e.target) && e.target !== saveTrigger) {
+            const saveTrigger = document.getElementById('save-menu-trigger');
+            
+            if (this.menuVisible && 
+                mobileMenu && 
+                !mobileMenu.contains(e.target) && 
+                e.target !== saveTrigger) {
                 this.hideMobileMenu();
             }
         });
@@ -419,39 +465,51 @@ class SaveManager extends CoreSystem {
         console.log("移动端存档菜单事件监听设置完成");
     }
     
-    // 显示移动端菜单
+    // 显示移动端菜单（优化动画）
     showMobileMenu() {
         const mobileMenu = document.querySelector('.save-mobile-menu');
-        if (mobileMenu) {
+        const saveTrigger = this.saveTriggerElement;
+        
+        if (mobileMenu && saveTrigger) {
             mobileMenu.style.display = 'flex';
             this.menuVisible = true;
             
             // 添加显示动画
             mobileMenu.style.opacity = '0';
-            mobileMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
+            mobileMenu.style.transform = 'translate(-50%, -50%) scale(0.8)';
             
             setTimeout(() => {
-                mobileMenu.style.transition = 'all 0.3s ease';
+                mobileMenu.style.transition = 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
                 mobileMenu.style.opacity = '1';
                 mobileMenu.style.transform = 'translate(-50%, -50%) scale(1)';
             }, 10);
+            
+            // 触发按钮高亮
+            saveTrigger.style.background = 'var(--button-hover)';
+            saveTrigger.style.boxShadow = '0 0 20px rgba(0,0,0,0.4)';
             
             console.log("移动端存档菜单已显示");
         }
     }
     
-    // 隐藏移动端菜单
+    // 隐藏移动端菜单（优化动画）
     hideMobileMenu() {
         const mobileMenu = document.querySelector('.save-mobile-menu');
-        if (mobileMenu) {
+        const saveTrigger = this.saveTriggerElement;
+        
+        if (mobileMenu && saveTrigger) {
             mobileMenu.style.transition = 'all 0.2s ease';
             mobileMenu.style.opacity = '0';
-            mobileMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
+            mobileMenu.style.transform = 'translate(-50%, -50%) scale(0.8)';
             
             setTimeout(() => {
                 mobileMenu.style.display = 'none';
                 this.menuVisible = false;
             }, 200);
+            
+            // 恢复触发按钮样式
+            saveTrigger.style.background = 'var(--button-bg)';
+            saveTrigger.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
             
             console.log("移动端存档菜单已隐藏");
         }
@@ -798,13 +856,22 @@ style.textContent = `
         justify-content: center;
     }
     
-    /* 移动端存档触发元素样式 */
+    .save-button:hover {
+        background-color: var(--button-hover);
+        transform: scale(1.1);
+    }
+    
+    .save-button:active {
+        transform: scale(0.95);
+    }
+    
+    /* 移动端存档触发按钮样式 */
     .save-menu-trigger {
         position: fixed;
-        bottom: 200px;
+        bottom: 20px;
         right: 20px;
-        width: 50px;
-        height: 50px;
+        width: 60px;
+        height: 60px;
         background: var(--button-bg);
         border: 2px solid var(--border-color);
         border-radius: 50%;
@@ -813,14 +880,14 @@ style.textContent = `
         justify-content: center;
         cursor: pointer;
         z-index: 998;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        font-size: 20px;
-        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        font-size: 24px;
+        transition: all 0.3s ease;
     }
     
     .save-menu-trigger:active {
         transform: scale(0.9);
-        opacity: 0.7;
+        background: var(--button-hover);
     }
     
     /* 移动端存档菜单样式 */
@@ -829,32 +896,36 @@ style.textContent = `
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background: var(--button-bg);
+        background: var(--panel-bg);
         border: 2px solid var(--border-color);
-        border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        border-radius: 16px;
+        box-shadow: 0 12px 32px rgba(0,0,0,0.4);
         z-index: 1001;
         display: none;
         flex-direction: column;
-        padding: 12px;
-        gap: 8px;
-        min-width: 160px;
+        padding: 16px;
+        gap: 12px;
+        min-width: 200px;
+        backdrop-filter: blur(10px);
     }
     
     .save-mobile-menu-item {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 10px 15px;
-        border-radius: 8px;
+        gap: 12px;
+        padding: 14px 16px;
+        border-radius: 12px;
         cursor: pointer;
-        transition: background-color 0.2s;
-        font-size: 14px;
+        transition: all 0.3s ease;
+        font-size: 16px;
         color: var(--text-color);
+        background: var(--button-bg);
+        border: 1px solid var(--border-color);
     }
     
-    .save-mobile-menu-item:hover {
-        background-color: var(--button-hover);
+    .save-mobile-menu-item:active {
+        transform: scale(0.95);
+        background: var(--button-hover);
     }
     
     /* 移动端：隐藏桌面端按钮 */
@@ -880,6 +951,36 @@ style.textContent = `
         -ms-user-select: none;
         pointer-events: auto;
         z-index: 9999;
+    }
+    
+    /* 小屏幕手机优化 */
+    @media (max-width: 480px) {
+        .save-menu-trigger {
+            width: 55px;
+            height: 55px;
+            font-size: 22px;
+            bottom: 15px;
+            right: 15px;
+        }
+        
+        .save-mobile-menu {
+            min-width: 180px;
+            padding: 14px;
+        }
+        
+        .save-mobile-menu-item {
+            padding: 12px 14px;
+            font-size: 15px;
+        }
+    }
+    
+    /* 超大屏幕优化 */
+    @media (min-width: 1200px) {
+        .save-menu-trigger {
+            width: 65px;
+            height: 65px;
+            font-size: 26px;
+        }
     }
 `;
 document.head.appendChild(style);
