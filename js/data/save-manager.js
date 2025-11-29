@@ -1,4 +1,4 @@
-// 全局存档管理器
+// 存档管理模块 - 完全解耦版本
 class SaveManager extends CoreSystem {
     constructor() {
         super();
@@ -13,6 +13,9 @@ class SaveManager extends CoreSystem {
         this.menuVisible = false;
         this.longPressTimer = null;
         this.longPressTriggered = false;
+        
+        // 新增：独立的存档菜单触发元素
+        this.saveTriggerElement = null;
         
         // 初始化
         this.init();
@@ -49,30 +52,33 @@ class SaveManager extends CoreSystem {
     recreateButtons() {
         console.log("重新创建存档按钮");
         
-        // 移除现有按钮
+        // 移除现有元素
         const existingContainer = document.querySelector('.save-buttons-container');
         const existingMobileMenu = document.querySelector('.save-mobile-menu');
         const existingFileInput = document.getElementById('save-file-input');
+        const existingTrigger = document.querySelector('.save-menu-trigger');
         
         if (existingContainer) existingContainer.remove();
         if (existingMobileMenu) existingMobileMenu.remove();
         if (existingFileInput) existingFileInput.remove();
+        if (existingTrigger) existingTrigger.remove();
         
-        // 重新创建按钮
+        // 重新创建
         this.createSaveButtons();
         this.setupEventListeners();
     }
     
-    // 创建存档按钮
+    // 创建存档按钮 - 关键修改：完全分离触发元素
     createSaveButtons() {
         if (this.isMobile) {
-            this.createMobileSaveButtons();
+            this.createMobileSaveTrigger(); // 创建独立的触发元素
+            this.createMobileSaveMenu();
         } else {
             this.createDesktopSaveButtons();
         }
     }
     
-    // 创建桌面端按钮
+    // 桌面端：创建独立的存档按钮
     createDesktopSaveButtons() {
         const timeDisplay = document.getElementById('game-time-display');
         if (!timeDisplay) {
@@ -87,14 +93,14 @@ class SaveManager extends CoreSystem {
         buttonContainer.style.cssText = `
             position: absolute;
             right: 110px;
-            top: 2.5%;
+            top: 46.5%;
             transform: translateY(-50%);
             display: flex;
             gap: 8px;
             z-index: 999;
         `;
         
-        // 创建三个按钮
+        // 创建三个独立按钮
         const buttons = [
             { id: 'new-save', icon: '🆕', title: '新存档' },
             { id: 'import-save', icon: '📁', title: '导入存档' },
@@ -138,32 +144,65 @@ class SaveManager extends CoreSystem {
         console.log("桌面端存档按钮创建完成");
     }
     
-    // 创建移动端按钮
-    createMobileSaveButtons() {
-        // 创建移动端菜单容器
+    // 移动端：创建独立的触发元素（关键修改）
+    createMobileSaveTrigger() {
+        // 创建触发存档菜单的元素（可以是页面空白区域或独立按钮）
+        const trigger = document.createElement('div');
+        trigger.className = 'save-menu-trigger';
+        trigger.id = 'save-menu-trigger';
+        trigger.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: var(--button-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 998;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-size: 20px;
+            transition: all 0.3s;
+        `;
+        trigger.innerHTML = '💾';
+        trigger.title = '长按3秒显示存档菜单';
+        
+        document.body.appendChild(trigger);
+        this.saveTriggerElement = trigger;
+        
+        console.log("移动端存档触发元素创建完成");
+    }
+    
+    // 移动端：创建存档菜单
+    createMobileSaveMenu() {
         const mobileMenu = document.createElement('div');
         mobileMenu.className = 'save-mobile-menu';
         mobileMenu.style.cssText = `
             position: fixed;
-            top: 70px;
-            right: 15px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: var(--button-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 1000;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            z-index: 1001;
             display: none;
             flex-direction: column;
-            padding: 8px;
-            gap: 6px;
-            min-width: 120px;
+            padding: 12px;
+            gap: 8px;
+            min-width: 160px;
         `;
         
         // 创建三个菜单项
         const menuItems = [
-            { id: 'mobile-new-save', icon: '🆕', text: '新存档' },
-            { id: 'mobile-import-save', icon: '📁', text: '导入' },
-            { id: 'mobile-export-save', icon: '💾', text: '导出' }
+            { id: 'mobile-new-save', icon: '🆕', text: '新游戏' },
+            { id: 'mobile-import-save', icon: '📁', text: '导入存档' },
+            { id: 'mobile-export-save', icon: '💾', text: '导出存档' }
         ];
         
         menuItems.forEach(item => {
@@ -173,16 +212,16 @@ class SaveManager extends CoreSystem {
             menuItem.style.cssText = `
                 display: flex;
                 align-items: center;
-                gap: 8px;
-                padding: 8px 12px;
-                border-radius: 6px;
+                gap: 10px;
+                padding: 10px 15px;
+                border-radius: 8px;
                 cursor: pointer;
                 transition: background-color 0.2s;
                 font-size: 14px;
                 color: var(--text-color);
             `;
             menuItem.innerHTML = `
-                <span style="font-size: 16px;">${item.icon}</span>
+                <span style="font-size: 18px;">${item.icon}</span>
                 <span>${item.text}</span>
             `;
             
@@ -209,21 +248,21 @@ class SaveManager extends CoreSystem {
         console.log("移动端存档菜单创建完成");
     }
     
-    // 设置事件监听器
+    // 设置事件监听器 - 关键修改：完全分离主题和存档事件
     setupEventListeners() {
         if (this.isMobile) {
-            this.setupMobileEventListeners();
+            this.setupMobileEventListeners(); // 移动端：独立的触发元素
         } else {
-            this.setupDesktopEventListeners();
+            this.setupDesktopEventListeners(); // 桌面端：独立按钮
         }
         
-        // 添加窗口大小变化监听器 - 修复响应式检测
+        // 添加窗口大小变化监听器
         window.addEventListener('resize', () => {
             this.checkDeviceType();
         });
     }
     
-    // 设置桌面端事件监听
+    // 桌面端事件监听 - 保持不变
     setupDesktopEventListeners() {
         const newSaveButton = document.getElementById('new-save');
         const importButton = document.getElementById('import-save');
@@ -274,57 +313,69 @@ class SaveManager extends CoreSystem {
         });
     }
     
-    // 设置移动端事件监听 - 修复与新的控制台下拉菜单的冲突
+    // 移动端事件监听 - 关键修改：使用独立触发元素
     setupMobileEventListeners() {
-        const themeToggle = document.getElementById('theme-toggle');
-        const mobileMenu = document.querySelector('.save-mobile-menu');
         const fileInput = document.getElementById('save-file-input');
+        const saveTrigger = this.saveTriggerElement;
         
-        if (!themeToggle || !mobileMenu) {
-            console.warn("移动端元素未找到，延迟设置事件监听");
+        if (!saveTrigger) {
+            console.warn("移动端存档触发元素未找到，延迟设置事件监听");
             setTimeout(() => this.setupMobileEventListeners(), 500);
             return;
         }
         
-        console.log("设置移动端事件监听器");
+        console.log("设置移动端存档事件监听器");
         
-        // 修复移动端主题切换按钮问题 - 不干扰控制台解锁功能
-        this.setupMobileThemeToggle(themeToggle);
-        
-        // 双击主题切换按钮显示存档菜单（避免与控制台下拉菜单冲突）
-        let lastTapTime = 0;
-        let tapCount = 0;
-        
-        themeToggle.addEventListener('touchend', (e) => {
+        // 关键修改：不再监听 theme-toggle，改为监听独立的触发元素
+        // 长按触发存档菜单
+        saveTrigger.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            const currentTime = new Date().getTime();
-            const timeDiff = currentTime - lastTapTime;
+            this.longPressTriggered = false;
             
-            // 如果是双击（500ms内连续点击两次）
-            if (timeDiff < 500 && tapCount === 1) {
-                tapCount = 0;
+            this.longPressTimer = setTimeout(() => {
+                this.longPressTriggered = true;
                 this.showMobileMenu();
-                console.log("移动端双击触发，显示存档菜单");
-                
-                // 阻止事件继续传播，避免触发控制台下拉菜单
-                e.stopImmediatePropagation();
-                return;
+                console.log("移动端长按3秒触发，显示存档菜单");
+            }, 3000);
+            
+            // 添加视觉反馈
+            saveTrigger.style.transform = 'scale(0.9)';
+            saveTrigger.style.opacity = '0.7';
+        });
+        
+        saveTrigger.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (this.longPressTimer) {
+                clearTimeout(this.longPressTimer);
+                this.longPressTimer = null;
             }
             
-            tapCount++;
-            lastTapTime = currentTime;
+            // 恢复视觉状态
+            saveTrigger.style.transform = 'scale(1)';
+            saveTrigger.style.opacity = '1';
             
-            // 重置计数
-            setTimeout(() => {
-                tapCount = 0;
-            }, 500);
-            
-            // 如果不是双击，执行正常的主题切换
-            if (tapCount === 1) {
-                // 手动触发主题切换，但不干扰控制台解锁计数
-                this.toggleThemeOnly();
-                console.log("移动端点击触发主题切换");
+            // 如果不是长按，可以添加单击反馈（可选）
+            if (!this.longPressTriggered) {
+                // 添加一个简短的单击动画
+                saveTrigger.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    saveTrigger.style.transform = 'scale(1)';
+                }, 100);
             }
+            
+            this.longPressTriggered = false;
+        });
+        
+        saveTrigger.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            // 移动时取消长按
+            if (this.longPressTimer) {
+                clearTimeout(this.longPressTimer);
+                this.longPressTimer = null;
+                this.longPressTriggered = false;
+            }
+            saveTrigger.style.transform = 'scale(1)';
+            saveTrigger.style.opacity = '1';
         });
         
         // 点击菜单项
@@ -359,103 +410,13 @@ class SaveManager extends CoreSystem {
         
         // 点击菜单外部关闭菜单
         document.addEventListener('touchstart', (e) => {
-            if (this.menuVisible && mobileMenu && !mobileMenu.contains(e.target) && e.target !== themeToggle) {
+            const mobileMenu = document.querySelector('.save-mobile-menu');
+            if (this.menuVisible && mobileMenu && !mobileMenu.contains(e.target) && e.target !== saveTrigger) {
                 this.hideMobileMenu();
             }
         });
         
         console.log("移动端存档菜单事件监听设置完成");
-    }
-    
-    // 修复移动端主题切换按钮问题 - 不干扰控制台解锁功能
-    setupMobileThemeToggle(themeToggle) {
-        console.log("设置移动端主题切换按钮");
-        
-        // 移除原有的click事件监听器，防止冲突
-        const newToggle = themeToggle.cloneNode(true);
-        themeToggle.parentNode.replaceChild(newToggle, themeToggle);
-        
-        // 重新添加主题切换功能，但不覆盖控制台解锁功能
-        newToggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            // 只执行主题切换，不处理控制台解锁
-            this.toggleThemeOnly();
-            console.log("移动端主题按钮点击（仅切换主题）");
-        });
-        
-        // 更新全局引用
-        window.themeToggle = newToggle;
-        
-        // 确保移动端也能触发控制台解锁
-        this.setupMobileConsoleUnlock(newToggle);
-    }
-    
-    // 设置移动端控制台解锁功能
-    setupMobileConsoleUnlock(themeToggle) {
-        let mobileClickCount = 0;
-        let mobileClickTimer = null;
-        
-        // 添加触摸事件监听器，用于控制台解锁计数
-        themeToggle.addEventListener('touchend', (e) => {
-            // 只在移动端且不是双击时计数
-            if (this.isMobile) {
-                mobileClickCount++;
-                console.log(`移动端控制台解锁计数: ${mobileClickCount}`);
-                
-                // 清除之前的计时器
-                if (mobileClickTimer) {
-                    clearTimeout(mobileClickTimer);
-                }
-                
-                // 设置新的计时器，10秒后重置计数
-                mobileClickTimer = setTimeout(() => {
-                    mobileClickCount = 0;
-                    console.log("移动端控制台解锁计数已重置");
-                }, 10000);
-                
-                // 检查是否达到解锁条件
-                if (mobileClickCount >= 10) {
-                    const consoleElement = document.getElementById('de_console');
-                    if (consoleElement) {
-                        consoleElement.style.display = 'block';
-                        console.log("移动端控制台已解锁并显示");
-                        
-                        // 重置计数
-                        mobileClickCount = 0;
-                        
-                        // 设置保护期
-                        if (mobileClickTimer) {
-                            clearTimeout(mobileClickTimer);
-                        }
-                        mobileClickTimer = setTimeout(() => {
-                            console.log("移动端控制台解锁保护期结束");
-                            mobileClickCount = 0;
-                        }, 2000);
-                    }
-                    
-                    // 添加解锁提示
-                    if (window.evolutionSystem) {
-                        window.evolutionSystem.addKeyEvent("开发者控制台已解锁");
-                    }
-                }
-            }
-        });
-    }
-    
-    // 仅切换主题，不干扰控制台解锁计数
-    toggleThemeOnly() {
-        const body = document.body;
-        if (body.classList.contains('light-theme')) {
-            body.classList.remove('light-theme');
-            body.classList.add('dark-theme');
-            window.themeToggle.textContent = '☀️';
-        } else {
-            body.classList.remove('dark-theme');
-            body.classList.add('light-theme');
-            window.themeToggle.textContent = '🌙';
-        }
-        
-        console.log("主题已切换（仅主题）");
     }
     
     // 显示移动端菜单
@@ -467,12 +428,12 @@ class SaveManager extends CoreSystem {
             
             // 添加显示动画
             mobileMenu.style.opacity = '0';
-            mobileMenu.style.transform = 'translateY(-10px)';
+            mobileMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             
             setTimeout(() => {
                 mobileMenu.style.transition = 'all 0.3s ease';
                 mobileMenu.style.opacity = '1';
-                mobileMenu.style.transform = 'translateY(0)';
+                mobileMenu.style.transform = 'translate(-50%, -50%) scale(1)';
             }, 10);
             
             console.log("移动端存档菜单已显示");
@@ -485,7 +446,7 @@ class SaveManager extends CoreSystem {
         if (mobileMenu) {
             mobileMenu.style.transition = 'all 0.2s ease';
             mobileMenu.style.opacity = '0';
-            mobileMenu.style.transform = 'translateY(-10px)';
+            mobileMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             
             setTimeout(() => {
                 mobileMenu.style.display = 'none';
@@ -496,42 +457,85 @@ class SaveManager extends CoreSystem {
         }
     }
     
-    // 创建新存档
+    // 创建新存档 - 修复缓存清除问题
     createNewSave() {
         if (confirm("确定要创建新存档吗？当前进度将会丢失！")) {
+            console.log("开始创建新存档，清除所有缓存数据...");
+            
             // 清除所有缓存数据
             this.clearAllStorage();
             
             // 添加重置冷却时间的标记
             localStorage.setItem("reset_cooldowns", "true");
             
-            // 重新加载页面
-            location.reload();
+            console.log("缓存清除完成，等待100ms后重新加载页面...");
+            
+            // 延迟100ms确保缓存完全清除
+            setTimeout(() => {
+                console.log("重新加载页面，开始新游戏");
+                location.reload();
+            }, 100);
         }
     }
     
-    // 清除所有存储数据
+    // 清除所有存储数据 - 修复状态重置问题
     clearAllStorage() {
         try {
+            console.log("开始清除所有存档数据...");
+            
             // 清除状态系统缓存
             localStorage.removeItem("evolution_simulator_cache");
+            console.log("已清除状态系统缓存");
             
             // 清除自动存档
             localStorage.removeItem("evolution_simulator_auto_save");
+            console.log("已清除自动存档");
             
             // 清除主存档
             localStorage.removeItem(this.STORAGE_KEY);
+            console.log("已清除主存档");
             
             // 清除重置标记（如果有）
             localStorage.removeItem("reset_cooldowns");
+            console.log("已清除重置标记");
             
-            console.log("所有存档数据已清除");
+            // 强制重置游戏状态
+            this.forceResetGameState();
             
-            if (window.evolutionSystem) {
-                window.evolutionSystem.addKeyEvent("已清除所有存档数据，开始新游戏");
-            }
+            console.log("所有存档数据已清除，游戏状态已重置");
+            
         } catch (error) {
             console.error("清除存档数据失败:", error);
+        }
+    }
+    
+    // 强制重置游戏状态
+    forceResetGameState() {
+        // 如果游戏系统已初始化，直接重置状态
+        if (window.stateSystem && window.evolutionSystem) {
+            console.log("强制重置游戏状态...");
+            
+            // 重置状态系统
+            window.stateSystem.initializeDefaultValues();
+            
+            // 重置进化系统
+            window.evolutionSystem.evolutionLevel = 0;
+            window.evolutionSystem.evolutionPoints = 0;
+            window.evolutionSystem.requiredPoints = window.evolutionSystem.calculateRequiredPoints(1);
+            
+            // 重置进化路线系统
+            if (window.evolutionRouteSystem) {
+                window.evolutionRouteSystem.hasThought = false;
+                window.evolutionRouteSystem.updateAvailableButtons();
+                window.evolutionRouteSystem.updateAttributeDisplay(0);
+            }
+            
+            // 更新UI
+            window.stateSystem.updateUI();
+            window.evolutionSystem.updateUI();
+            window.evolutionSystem.updateRequirementsList();
+            
+            console.log("游戏状态强制重置完成");
         }
     }
     
@@ -760,8 +764,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 3000);
 });
 
-// 响应式样式
+// 移除干扰主题的CSS样式（原样式中的移动端主题按钮提示）
+const existingStyle = document.querySelector('style[data-save-manager-style]');
+if (existingStyle) existingStyle.remove();
+
 const style = document.createElement('style');
+style.setAttribute('data-save-manager-style', 'true');
 style.textContent = `
     /* 桌面端存档按钮样式 */
     .desktop-save-buttons {
@@ -790,29 +798,55 @@ style.textContent = `
         justify-content: center;
     }
     
+    /* 移动端存档触发元素样式 */
+    .save-menu-trigger {
+        position: fixed;
+        bottom: 200px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        background: var(--button-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 998;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        font-size: 20px;
+        transition: all 0.3s;
+    }
+    
+    .save-menu-trigger:active {
+        transform: scale(0.9);
+        opacity: 0.7;
+    }
+    
     /* 移动端存档菜单样式 */
     .save-mobile-menu {
         position: fixed;
-        top: 70px;
-        right: 15px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         background: var(--button-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 1000;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        z-index: 1001;
         display: none;
         flex-direction: column;
-        padding: 8px;
-        gap: 6px;
-        min-width: 120px;
+        padding: 12px;
+        gap: 8px;
+        min-width: 160px;
     }
     
     .save-mobile-menu-item {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        border-radius: 6px;
+        gap: 10px;
+        padding: 10px 15px;
+        border-radius: 8px;
         cursor: pointer;
         transition: background-color 0.2s;
         font-size: 14px;
@@ -823,45 +857,23 @@ style.textContent = `
         background-color: var(--button-hover);
     }
     
-    /* 移动端主题按钮长按提示 */
+    /* 移动端：隐藏桌面端按钮 */
     @media (max-width: 768px) {
-        .theme-toggle::after {
-            content: "双击显示存档菜单";
-            position: absolute;
-            top: 50px;
-            right: 0;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-            z-index: 1002;
-        }
-        
-        .theme-toggle:hover::after {
-            opacity: 1;
-        }
-        
-        /* 隐藏桌面端按钮容器 */
-        .save-buttons-container {
+        .desktop-save-buttons {
             display: none !important;
         }
     }
     
-    /* 桌面端样式 */
+    /* 桌面端：隐藏移动端元素 */
     @media (min-width: 769px) {
-        /* 隐藏移动端菜单 */
+        .save-menu-trigger,
         .save-mobile-menu {
             display: none !important;
         }
     }
     
     /* 防止文本选择和遮挡 */
-    .save-buttons-container, .save-mobile-menu {
+    .save-buttons-container, .save-mobile-menu, .save-menu-trigger {
         user-select: none;
         -webkit-user-select: none;
         -moz-user-select: none;

@@ -52,7 +52,7 @@ html, body {
     -webkit-overflow-scrolling: touch; /* 启用iOS弹性滚动 */
 }
 
-/* 主题切换按钮 - 修复位置 */
+/* 主题切换按钮 - 关键修改：移除所有存档菜单相关样式 */
 .theme-toggle {
     position: fixed;
     top: 10px;
@@ -65,12 +65,12 @@ html, body {
     color: var(--text-color);
     cursor: pointer;
     font-size: 18px;
-    z-index: 1001;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1001; /* 确保主题按钮在最上层 */
 }
 
 .theme-toggle:hover {
@@ -82,81 +82,223 @@ html, body {
     transform: scale(0.95);
 }
 
-/* 主题按钮下拉菜单 - 桌面端 */
-.theme-toggle-dropdown {
+/* 移动端标题可点击样式 - 仅用于打开控制台，与存档无关 */
+.header h1 {
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.header h1:hover {
+    color: var(--button-hover);
+    transform: scale(1.05);
+}
+
+.header h1:active {
+    transform: scale(0.95);
+}
+
+/* 新增：桌面端存档按钮样式 */
+.save-buttons-container {
     position: absolute;
-    top: 45px;
-    right: 0;
+    right: 110px;
+    top: 46.5%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 999;
+}
+
+.save-button {
     background: var(--button-bg);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 1002;
-    display: none;
-    flex-direction: column;
-    min-width: 120px;
-    overflow: hidden;
-}
-
-.theme-toggle-dropdown.show {
-    display: flex;
-}
-
-.theme-toggle-dropdown-item {
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 14px;
+    bottom: 25px;
+    color: var(--text-color);
+    transition: all 0.2s;
+    width: 32px;
+    height: 24px;
     display: flex;
     align-items: center;
+    justify-content: center;
+}
+
+.save-button:hover {
+    background-color: var(--button-hover);
+    transform: scale(1.1);
+}
+
+.save-button:active {
+    transform: scale(0.95);
+}
+
+/* 新增：移动端存档触发元素样式 */
+.save-menu-trigger {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: var(--button-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 998;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    font-size: 20px;
+    transition: all 0.3s;
+}
+
+.save-menu-trigger:active {
+    transform: scale(0.9);
+    opacity: 0.7;
+}
+
+/* 移动端存档菜单样式 */
+.save-mobile-menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--button-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    z-index: 1001;
+    display: none;
+    flex-direction: column;
+    padding: 12px;
     gap: 8px;
-    padding: 10px 12px;
+    min-width: 160px;
+}
+
+.save-mobile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.2s;
     font-size: 14px;
     color: var(--text-color);
-    border: none;
-    background: none;
-    width: 100%;
-    text-align: left;
 }
 
-.theme-toggle-dropdown-item:hover {
+.save-mobile-menu-item:hover {
     background-color: var(--button-hover);
 }
 
-/* 移动端主题按钮调整 */
+/* 响应式显示/隐藏 */
 @media (max-width: 768px) {
+    .desktop-save-buttons {
+        display: none !important;
+    }
+    
     .theme-toggle {
+        top: 15px;
+        right: 15px;
         width: 45px;
         height: 45px;
         font-size: 20px;
-        top: 15px;
-        right: 15px;
     }
     
-    /* 移动端长按提示 */
-    .theme-toggle::after {
-        content: "长按显示菜单";
-        position: absolute;
-        top: 50px;
-        right: 0;
-        background: rgba(0,0,0,0.8);
-        color: white;
-        padding: 6px 10px;
-        border-radius: 6px;
-        font-size: 11px;
-        white-space: nowrap;
-        opacity: 0;
-        transition: opacity 0.3s;
-        pointer-events: none;
-        z-index: 1002;
+    /* 小屏幕手机额外优化 */
+    @media (max-width: 480px) {
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            top: 12px;
+            right: 12px;
+        }
+        
+        .save-menu-trigger {
+            width: 45px;
+            height: 45px;
+            font-size: 18px;
+            bottom: 15px;
+            right: 15px;
+        }
     }
-    
-    .theme-toggle:hover::after {
-        opacity: 1;
+}
+
+@media (min-width: 769px) {
+    .save-menu-trigger,
+    .save-mobile-menu {
+        display: none !important;
     }
-    
-    /* 移动端下拉菜单位置调整 */
-    .theme-toggle-dropdown {
-        top: 50px;
-        right: 0;
-        min-width: 140px;
-    }
+}
+
+/* 防止文本选择和遮挡 */
+.theme-toggle,
+.save-buttons-container,
+.save-mobile-menu,
+.save-menu-trigger {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    pointer-events: auto;
+}
+
+/* 移动设备上的滚动优化 */
+.mobile-device {
+    -webkit-overflow-scrolling: touch;
+}
+
+.mobile-device .scrollable {
+    overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 确保元素不会被意外遮挡 */
+.theme-toggle {
+    pointer-events: auto !important;
+}
+
+/* 新增的独立存档菜单样式 */
+.save-mobile-menu,
+.save-menu-trigger {
+    pointer-events: auto;
+}
+
+/* 控制台按钮样式 */
+#console-btn {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-left: 120px; /* 标题右侧120px */
+    background: var(--button-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: none; /* 初始隐藏 */
+    transition: all 0.3s;
+    z-index: 100;
+}
+
+#console-btn:hover {
+    background-color: var(--button-hover);
+    transform: translateX(-50%) scale(1.1);
+}
+
+/* 标题容器 */
+.header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header h1 {
+    display: inline-block;
+    margin: 0;
 }
