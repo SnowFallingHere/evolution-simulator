@@ -1,70 +1,151 @@
 /**
- * 动态创建并注入分割矩形元素
- * 确保元素位于页面中部并被分割线精确分为两半
+ * 页面展开按钮管理器
+ * 管理书签式展开按钮及其指示器的创建、定位和交互
+ * 提供可扩展的API以支持未来的功能增强
  */
-class DynamicDivInjector {
+class ExpandingButtonManager {
     constructor() {
-        this.divElement = null;
-        this.splitLinePosition = 0;
-        this.angleIndicator = null;
-        this.indicatorRotation = -45; // 默认旋转45度
+        // 核心元素引用
+        this.buttonElement = null;    // 展开按钮元素
+        this.splitLinePosition = 0;   // 分割线位置
+        this.angleIndicator = null;   // 角度指示器元素
+        this.indicatorRotation = -45; // 默认旋转角度（形成<形状）
+        
+        // 配置常量
+        this.BUTTON_WIDTH = 40;       // 按钮宽度
+        this.BUTTON_HEIGHT = 50;      // 按钮高度
+        this.INDICATOR_SIZE = 20;     // 指示器大小
+        this.RIGHT_OFFSET = 10;       // 右侧偏移量
+        
+        // 事件监听器引用，便于后续移除
+        this.resizeListener = null;
+        this.scrollListener = null;
+        this.clickListener = null;
     }
 
     /**
-     * 初始化并注入div元素
+     * 初始化展开按钮系统
+     * 设置DOM元素、事件监听器和初始位置
      */
     init() {
         // 确保DOM已加载
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.createAndInjectDiv());
+            document.addEventListener('DOMContentLoaded', () => this.createButton());
         } else {
-            this.createAndInjectDiv();
+            this.createButton();
         }
 
-        // 监听窗口大小变化，确保定位正确
-        window.addEventListener('resize', () => this.positionDiv());
-        
-        // 监听页面滚动，确保div始终在视口中正确定位
-        window.addEventListener('scroll', () => this.positionDiv());
+        // 设置事件监听器
+        this.setupEventListeners();
     }
 
     /**
-     * 创建并注入div元素
+     * 创建展开按钮及其指示器
+     * 设置为书签式按钮，ID为bookmark
      */
-    createAndInjectDiv() {
-        // 创建div元素
-        this.divElement = document.createElement('div');
-        this.divElement.className = 'split-rectangle';
+    createButton() {
+        // 创建按钮元素
+        this.buttonElement = document.createElement('div');
+        this.buttonElement.className = 'expanding-btn';
+        this.buttonElement.id = 'bookmark'; // 设置ID为bookmark
+        this.buttonElement.setAttribute('role', 'button'); // 语义化标记
+        this.buttonElement.setAttribute('aria-label', '页面展开按钮'); // 可访问性支持
         
-        // 将div添加到body中
-        document.body.appendChild(this.divElement);
+        // 将按钮添加到body中
+        document.body.appendChild(this.buttonElement);
         
         // 创建角度指示器
         this.createAngleIndicator();
         
-        // 计算分割线位置并定位div
+        // 计算位置并定位按钮
         this.calculateSplitLinePosition();
-        this.positionDiv();
+        this.positionButton();
+        
+        // 添加点击事件处理
+        this.setupButtonClickHandler();
         
         // 添加一个小延迟后显示元素，确保样式已应用
         setTimeout(() => {
-            this.divElement.classList.add('visible');
+            this.buttonElement.classList.add('visible');
         }, 100);
     }
     
     /**
      * 创建角度指示器元素
+     * 形成类似于<的形状
      */
     createAngleIndicator() {
         // 创建角度指示器元素
         this.angleIndicator = document.createElement('div');
         this.angleIndicator.className = 'angle-indicator';
         
-        // 应用默认旋转角度
+        // 应用默认旋转角度，形成<形状
         this.angleIndicator.style.transform = `rotate(${this.indicatorRotation}deg)`;
         
-        // 将指示器添加到body中（作为独立元素，不影响矩形）
+        // 将指示器添加到body中（作为独立元素，不影响按钮）
         document.body.appendChild(this.angleIndicator);
+    }
+    
+    /**
+     * 设置按钮点击事件处理器
+     * 预留接口，供未来实现展开功能
+     */
+    setupButtonClickHandler() {
+        this.clickListener = () => {
+            // 切换活动状态类
+            this.toggleActiveState();
+            
+            // TODO: 实现实际的展开/收起功能
+            // 预留接口，等待具体实现
+            console.log('展开按钮被点击');
+        };
+        
+        this.buttonElement.addEventListener('click', this.clickListener);
+    }
+    
+    /**
+     * 切换按钮的活动状态
+     */
+    toggleActiveState() {
+        if (this.buttonElement) {
+            this.buttonElement.classList.toggle('active');
+            return this.buttonElement.classList.contains('active');
+        }
+        return false;
+    }
+    
+    /**
+     * 设置事件监听器
+     */
+    setupEventListeners() {
+        // 监听窗口大小变化，确保定位正确
+        this.resizeListener = () => this.positionButton();
+        window.addEventListener('resize', this.resizeListener);
+        
+        // 监听页面滚动，确保按钮始终在视口中正确定位
+        this.scrollListener = () => this.positionButton();
+        window.addEventListener('scroll', this.scrollListener);
+    }
+    
+    /**
+     * 移除所有事件监听器
+     * 用于清理资源，防止内存泄漏
+     */
+    removeEventListeners() {
+        if (this.resizeListener) {
+            window.removeEventListener('resize', this.resizeListener);
+            this.resizeListener = null;
+        }
+        
+        if (this.scrollListener) {
+            window.removeEventListener('scroll', this.scrollListener);
+            this.scrollListener = null;
+        }
+        
+        if (this.clickListener && this.buttonElement) {
+            this.buttonElement.removeEventListener('click', this.clickListener);
+            this.clickListener = null;
+        }
     }
     
     /**
@@ -79,7 +160,8 @@ class DynamicDivInjector {
     }
 
     /**
-     * 计算分割线（center-panel::after伪元素）的位置
+     * 计算分割线位置
+     * 基于页面布局确定按钮的定位参考点
      */
     calculateSplitLinePosition() {
         // 尝试直接找到主内容区域中的分割线元素
@@ -92,7 +174,7 @@ class DynamicDivInjector {
             // 获取center-panel相对于页面的位置
             const rect = centerPanel.getBoundingClientRect();
             
-            // 关键点：分割线位置 = center-panel的右边缘（即CSS中center-panel::after伪元素的位置） + 页面滚动偏移
+            // 关键点：分割线位置 = center-panel的右边缘 + 页面滚动偏移
             // 这是分隔center panel和right panel的真实分割线位置
             this.splitLinePosition = rect.right + window.pageXOffset;
             
@@ -104,30 +186,28 @@ class DynamicDivInjector {
             
             // 使用两种方法的平均值提高精度
             this.splitLinePosition = (this.splitLinePosition + proportionalSplitPosition) / 2;
-            console.log('基于flex布局计算的精确分割线位置:', this.splitLinePosition);
         } else {
             // 如果找不到相关元素，默认将分割线放在页面水平居中位置
             this.splitLinePosition = window.innerWidth / 2;
-            console.warn('未找到足够的布局元素，使用默认分割线位置');
         }
     }
 
     /**
-     * 定位div元素，使其向右移动10px（部分覆盖分割线）
+     * 定位按钮元素
+     * 使其相对于分割线正确定位
      */
-    positionDiv() {
-        if (!this.divElement) return;
+    positionButton() {
+        if (!this.buttonElement) return;
 
         // 重新计算分割线位置（确保窗口大小变化后仍正确）
         this.calculateSplitLinePosition();
         
-        // 获取div元素的尺寸
-        const divWidth = this.divElement.offsetWidth || this.divElement.clientWidth || 40;
-        const divHeight = this.divElement.offsetHeight || this.divElement.clientHeight || 50;
+        // 获取按钮元素的尺寸
+        const buttonWidth = this.buttonElement.offsetWidth || this.buttonElement.clientWidth || this.BUTTON_WIDTH;
+        const buttonHeight = this.buttonElement.offsetHeight || this.buttonElement.clientHeight || this.BUTTON_HEIGHT;
         
-        // 关键点：让矩形元素向右移动10px，不再完全紧贴分割线左侧
-        // 左边缘位置 = 分割线位置 - div宽度 + 10px
-        const leftPosition = this.splitLinePosition - divWidth + 10;
+        // 计算左侧位置：分割线位置 - 按钮宽度 + 右侧偏移量
+        const leftPosition = this.splitLinePosition - buttonWidth + this.RIGHT_OFFSET;
         
         // 垂直位置调整 - 放置在主内容区域的中部
         const mainContent = document.querySelector('.main-content');
@@ -136,65 +216,56 @@ class DynamicDivInjector {
         if (mainContent) {
             // 如果能找到主内容区域，放在其垂直中心
             const mainRect = mainContent.getBoundingClientRect();
-            topPosition = (mainRect.top + mainRect.bottom) / 2 - divHeight / 2 + window.pageYOffset;
+            topPosition = (mainRect.top + mainRect.bottom) / 2 - buttonHeight / 2 + window.pageYOffset;
         } else {
             // 否则放在视口中心
             const viewportHeight = window.innerHeight;
             const pageYOffset = window.pageYOffset || document.documentElement.scrollTop;
-            topPosition = pageYOffset + (viewportHeight / 2) - (divHeight / 2);
+            topPosition = pageYOffset + (viewportHeight / 2) - (buttonHeight / 2);
         }
         
         // 应用定位样式
-        this.divElement.style.left = `${leftPosition}px`;
-        this.divElement.style.top = `${topPosition}px`;
+        this.buttonElement.style.left = `${leftPosition}px`;
+        this.buttonElement.style.top = `${topPosition}px`;
         
-        // 更新角度指示器的位置（向左偏移）
-        this.positionAngleIndicator(leftPosition, topPosition, divHeight);
-        
-        // 记录定位信息以便调试
-        console.log(`矩形定位 - 左: ${leftPosition}px, 上: ${topPosition}px, 向右偏移10px`);
+        // 更新角度指示器的位置
+        this.positionAngleIndicator(leftPosition, topPosition, buttonHeight);
         
         // 确保元素在可视区域内
         this.ensureVisibility();
     }
     
     /**
-     * 定位角度指示器，使其向左偏移并与矩形关联
-     * @param {number} rectLeft - 矩形的左位置
-     * @param {number} rectTop - 矩形的上位置
-     * @param {number} rectHeight - 矩形的高度
+     * 定位角度指示器
+     * @param {number} buttonLeft - 按钮的左位置
+     * @param {number} buttonTop - 按钮的上位置
+     * @param {number} buttonHeight - 按钮的高度
      */
-    positionAngleIndicator(rectLeft, rectTop, rectHeight) {
+    positionAngleIndicator(buttonLeft, buttonTop, buttonHeight) {
         if (!this.angleIndicator) return;
         
-        // 获取指示器尺寸
-        const indicatorSize = 20;
+        // 定位指示器在按钮的右侧边缘，但向左偏移
+        const indicatorLeft = buttonLeft + this.BUTTON_WIDTH - 30; // 向左偏移
         
-        // 定位指示器在矩形的右侧边缘，但向左偏移更多（10px）
-        // 水平位置 = 矩形左位置 + 矩形宽度 - 向左偏移量
-        const indicatorLeft = rectLeft + 40 - 30; // 40是矩形固定宽度，向左偏移10px
-        
-        // 垂直位置与矩形垂直居中对齐
-        const indicatorTop = rectTop + rectHeight / 2 - indicatorSize / 2;
+        // 垂直位置与按钮垂直居中对齐
+        const indicatorTop = buttonTop + buttonHeight / 2 - this.INDICATOR_SIZE / 2;
         
         // 应用定位和旋转样式
         this.angleIndicator.style.left = `${indicatorLeft}px`;
         this.angleIndicator.style.top = `${indicatorTop}px`;
         this.angleIndicator.style.transform = `rotate(${this.indicatorRotation}deg)`;
-        
-        console.log(`角度指示器定位 - 左: ${indicatorLeft}px, 上: ${indicatorTop}px, 旋转: ${this.indicatorRotation}deg, 向左偏移10px`);
     }
 
     /**
-     * 确保div元素在可视区域内，同时保持向右偏移10px的定位关系
+     * 确保按钮元素在可视区域内
      */
     ensureVisibility() {
-        if (!this.divElement) return;
+        if (!this.buttonElement) return;
 
         // 获取元素的尺寸和位置
-        const rect = this.divElement.getBoundingClientRect();
-        const divWidth = rect.width || this.divElement.offsetWidth || this.divElement.clientWidth || 40;
-        const divHeight = rect.height || this.divElement.offsetHeight || this.divElement.clientHeight || 50;
+        const rect = this.buttonElement.getBoundingClientRect();
+        const buttonWidth = rect.width || this.buttonElement.offsetWidth || this.buttonElement.clientWidth || this.BUTTON_WIDTH;
+        const buttonHeight = rect.height || this.buttonElement.offsetHeight || this.buttonElement.clientHeight || this.BUTTON_HEIGHT;
         
         // 获取视口尺寸和滚动位置
         const viewportWidth = window.innerWidth;
@@ -203,19 +274,16 @@ class DynamicDivInjector {
         const pageYOffset = window.pageYOffset || document.documentElement.scrollTop;
         
         // 获取当前位置
-        let left = parseFloat(this.divElement.style.left) || 0;
-        let top = parseFloat(this.divElement.style.top) || 0;
+        let left = parseFloat(this.buttonElement.style.left) || 0;
+        let top = parseFloat(this.buttonElement.style.top) || 0;
         
-        // 重要：保持向右偏移10px的定位关系
         // 重新计算正确的偏移位置
-        // 左边缘位置 = 分割线位置 - div宽度 + 10px
-        const correctLeftPosition = this.splitLinePosition - divWidth + 7;
+        const correctLeftPosition = this.splitLinePosition - buttonWidth + 7;
         
         // 只在极端情况下（元素几乎完全在视口外）才调整水平位置
         if (rect.right < 0 || rect.left > viewportWidth) {
             // 如果元素几乎完全在视口外，重新定位
-            left = Math.max(pageXOffset, Math.min(pageXOffset + viewportWidth - divWidth, correctLeftPosition));
-            console.log(`因完全不可见进行水平调整，新位置: ${left}px，尝试保持向右偏移10px`);
+            left = Math.max(pageXOffset, Math.min(pageXOffset + viewportWidth - buttonWidth, correctLeftPosition));
         } else {
             // 否则，强制保持正确的偏移位置
             left = correctLeftPosition;
@@ -227,18 +295,38 @@ class DynamicDivInjector {
             top = pageYOffset;
         } else if (rect.bottom > viewportHeight) {
             // 如果元素底部超出视口，调整位置
-            top = pageYOffset + viewportHeight - divHeight;
+            top = pageYOffset + viewportHeight - buttonHeight;
         }
         
         // 应用调整后的位置
-        this.divElement.style.left = `${left}px`;
-        this.divElement.style.top = `${top}px`;
+        this.buttonElement.style.left = `${left}px`;
+        this.buttonElement.style.top = `${top}px`;
+    }
+    
+    /**
+     * 销毁方法
+     * 清理资源，移除元素和事件监听器
+     */
+    destroy() {
+        // 移除事件监听器
+        this.removeEventListeners();
+        
+        // 移除DOM元素
+        if (this.buttonElement && this.buttonElement.parentNode) {
+            this.buttonElement.parentNode.removeChild(this.buttonElement);
+            this.buttonElement = null;
+        }
+        
+        if (this.angleIndicator && this.angleIndicator.parentNode) {
+            this.angleIndicator.parentNode.removeChild(this.angleIndicator);
+            this.angleIndicator = null;
+        }
     }
 }
 
 // 创建实例并初始化
-const dynamicDivInjector = new DynamicDivInjector();
-dynamicDivInjector.init();
+const expandingButtonManager = new ExpandingButtonManager();
+expandingButtonManager.init();
 
-// 暴露实例到window对象，方便外部调整角度
-window.dynamicDivInjector = dynamicDivInjector;
+// 暴露实例到window对象，方便外部控制和扩展
+window.expandingButtonManager = expandingButtonManager;
