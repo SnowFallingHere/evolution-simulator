@@ -1,0 +1,65 @@
+.split-rectangle {
+    /* 基本样式 */
+    background-color: #ffffff; /* 白色背景 */
+    border: 2px solid #cccccc; /* 灰色轮廓边框 */
+    border-radius: 10px; /* 圆角矩形 */
+    
+    /* 定位和显示样式 */
+    position: fixed;
+    z-index: 999; /* 确保在大多数元素上方 */
+    display: flex;
+    
+    /* 固定大小 */
+    width: 40px;
+    height: 50px;
+    
+    /* 初始隐藏 */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    /* 添加裁剪路径，只显示分割线左侧的部分 */
+    clip-path: inset(0 10px 0 0);
+    /* 确保子元素不会溢出 */
+    overflow: hidden;
+}
+
+/* 三角形形状样式 - 由JS动态创建和控制 */
+.angle-indicator {
+    position: fixed;
+    /* 使用SVG风格绘制仅轮廓的三角形 */
+    width: 20px;
+    height: 20px;
+    border-left: 2px solid #000000; /* 左边框 - 形成45度夹角的一条边 */
+    border-top: 2px solid #000000; /* 上边框 - 形成45度夹角的另一条边 */
+    /* 无填充，只有边框轮廓 */
+    background: transparent;
+    /* 确保不显示底边 */
+    border-right: none;
+    border-bottom: none;
+    /* 调整层级确保显示在矩形上方 */
+    z-index: 1000;
+    /* 确保可见性 */
+    opacity: 1;
+    visibility: visible;
+}
+
+.split-rectangle.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+/* 响应式调整 - 保持固定大小 */
+@media (max-width: 768px) {
+    .split-rectangle {
+        width: 40px;
+        height: 50px;
+    }
+}
+
+@media (max-width: 480px) {
+    .split-rectangle {
+        width: 40px;
+        height: 50px;
+    }
+}
