@@ -18,9 +18,34 @@ const PageConsole = {
             this.setupThemeToggle(); // 只处理主题切换
             this.createConsoleButton(); // 创建控制台按钮（初始隐藏）
             this.setupTimeControl(stateSystem);
+            
+            // 初始化控制台解锁状态
+            this.initializeConsoleUnlockState();
+            
             console.log("页面和控制台初始化完成");
         } catch (error) {
             console.error("页面和控制台初始化失败:", error);
+        }
+    },
+    
+    // 初始化控制台解锁状态
+    initializeConsoleUnlockState: function() {
+        // 从localStorage读取控制台解锁状态
+        const isConsoleUnlocked = localStorage.getItem('console_unlocked') === 'true';
+        const isNewSave = window.saveManager && window.saveManager.isNewSave ? window.saveManager.isNewSave() : false;
+        
+        // 更新控制台解锁数据
+        this.consoleUnlockData.isUnlocked = isConsoleUnlocked;
+        
+        console.log(`控制台解锁状态: ${isConsoleUnlocked}, 是否新存档: ${isNewSave}`);
+        
+        // 如果控制台已解锁且不是新存档，则直接显示控制台按钮
+        if (isConsoleUnlocked && !isNewSave) {
+            const consoleBtn = document.getElementById('console-btn');
+            if (consoleBtn) {
+                consoleBtn.style.display = 'block';
+                console.log("已解锁控制台且非新存档，直接显示控制台按钮");
+            }
         }
     },
     
@@ -81,6 +106,24 @@ const PageConsole = {
         
         // 切换主题
         this.toggleTheme();
+        
+        // 检查是否需要进行点击计数判断
+        const isConsolePreviouslyUnlocked = localStorage.getItem('console_unlocked') === 'true';
+        const isNewSave = window.saveManager && window.saveManager.isNewSave ? window.saveManager.isNewSave() : false;
+        
+        // 如果控制台已解锁并且不是新存档，则不再需要计数
+        if (isConsolePreviouslyUnlocked && !isNewSave) {
+            console.log("控制台已解锁且非新存档，跳过计数");
+            // 确保控制台按钮显示
+            if (!this.consoleUnlockData.isUnlocked) {
+                this.consoleUnlockData.isUnlocked = true;
+                const consoleBtn = document.getElementById('console-btn');
+                if (consoleBtn) {
+                    consoleBtn.style.display = 'block';
+                }
+            }
+            return;
+        }
         
         // 如果已解锁，不再计数
         if (this.consoleUnlockData.isUnlocked) return;
@@ -175,6 +218,8 @@ const PageConsole = {
     // 解锁控制台
     unlockConsole: function() {
         this.consoleUnlockData.isUnlocked = true;
+        
+        // 保存控制台解锁状态到localStorage
         localStorage.setItem('console_unlocked', 'true');
         
         // 清除定时器

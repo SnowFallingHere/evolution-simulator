@@ -8,6 +8,10 @@ class SaveManager extends CoreSystem {
         this.STORAGE_KEY = "evolution_simulator_save";
         this.AUTO_SAVE_KEY = "evolution_simulator_auto_save";
         
+        // 控制台解锁状态标志
+        this.NEW_SAVE_FLAG = "evolution_simulator_new_save";
+        this.FIRST_VISIT_KEY = "evolution_simulator_first_visit";
+        
         // 移动端状态
         this.isMobile = false;
         this.menuVisible = false;
@@ -526,6 +530,9 @@ class SaveManager extends CoreSystem {
             // 添加重置冷却时间的标记
             localStorage.setItem("reset_cooldowns", "true");
             
+            // 设置新存档标志
+            this.setNewSaveFlag();
+            
             console.log("缓存清除完成，等待100ms后重新加载页面...");
             
             // 延迟100ms确保缓存完全清除
@@ -707,6 +714,9 @@ class SaveManager extends CoreSystem {
             return;
         }
         
+        // 清除新存档标志
+        this.clearNewSaveFlag();
+        
         try {
             // 应用状态系统数据
             if (saveData.stateData) {
@@ -791,6 +801,21 @@ class SaveManager extends CoreSystem {
     // 检查自动保存
     checkAutoSave() {
         try {
+            // 检查是否是首次访问
+            const isFirstVisit = !localStorage.getItem(this.FIRST_VISIT_KEY);
+            if (isFirstVisit) {
+                console.log("检测到首次访问，跳过自动存档加载询问");
+                localStorage.setItem(this.FIRST_VISIT_KEY, 'false');
+                this.setNewSaveFlag();
+                return;
+            }
+            
+            // 先检查是否是新存档（如果已经设置了新存档标志，则直接跳过自动存档加载）
+            if (this.isNewSave()) {
+                console.log("检测到新存档标志，跳过自动存档加载询问");
+                return;
+            }
+            
             const autoSaveData = localStorage.getItem(this.AUTO_SAVE_KEY);
             if (autoSaveData) {
                 const saveData = JSON.parse(autoSaveData);
@@ -799,16 +824,47 @@ class SaveManager extends CoreSystem {
                 if (saveData.version === this.SAVE_VERSION) {
                     console.log("检测到自动保存的存档");
                     
-                    // 可以在这里添加提示用户是否加载自动存档的代码
-                    // this.promptLoadAutoSave(saveData);
+                    // 询问用户是否加载自动存档
+                    if (confirm("检测到自动存档，是否加载？")) {
+                        this.applySaveData(saveData);
+                        // 加载存档后清除新存档标志
+                        this.clearNewSaveFlag();
+                    } else {
+                        // 用户选择不加载自动存档，视为新存档
+                        this.setNewSaveFlag();
+                    }
                 } else {
                     console.log("自动保存的存档版本不匹配，已忽略");
                     localStorage.removeItem(this.AUTO_SAVE_KEY);
+                    // 版本不匹配视为新存档
+                    this.setNewSaveFlag();
                 }
+            } else {
+                // 没有自动存档，视为新存档
+                this.setNewSaveFlag();
             }
         } catch (error) {
             console.error("检查自动保存失败:", error);
+            // 出错时默认视为新存档
+            this.setNewSaveFlag();
         }
+    }
+    
+    // 设置新存档标志
+    setNewSaveFlag() {
+        localStorage.setItem(this.NEW_SAVE_FLAG, 'true');
+        console.log("已设置新存档标志");
+    }
+    
+    // 清除新存档标志
+    clearNewSaveFlag() {
+        localStorage.removeItem(this.NEW_SAVE_FLAG);
+        console.log("已清除新存档标志");
+    }
+    
+    // 检查是否为新存档
+    isNewSave() {
+        return localStorage.getItem(this.NEW_SAVE_FLAG) === 'true';
     }
 }
 
